@@ -1,0 +1,36 @@
+Rental App
+
+A full-stack rental application.
+- **Frontend:** Next.js 14, TypeScript, Tailwind CSS, shadcn/ui.
+- **Backend:** Node.js, Express, Socket.io (Real-time chat).
+- **Mobile:** Flutter (iOS/Android).
+- **Database:** MongoDB Atlas (Primary), Redis (Cache/Rate Limiting).
+- **Services:** Stripe (Payments), Cloudinary (Images), SendGrid (Email).
+
+# Development Setup
+
+## Installation
+
+in `root` do `npm run install-all`
+
+## Create .env files
+
+In `client/.env`
+```
+API_URL=http://localhost:5000
+```
+
+In `/server/.env`
+```
+PORT=5000
+MONGO_URI=
+```
+
+## Flutter SDK Installation
+
+Download the SDK
+[Flutter SDK](https://docs.flutter.dev/get-started/install/)
+
+# TODO
+- figma mockup
+- TA check in on Tuesday

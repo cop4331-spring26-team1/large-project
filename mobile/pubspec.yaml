@@ -1,0 +1,12 @@
+name: mobile
+environment:
+  sdk: '^3.11.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.4.1                   # To send email/password to the server
+  flutter_secure_storage: ^9.0.0 # To keep the JWT safe on the phone
+  flutter_riverpod: ^2.5.1      # To manage "Logged In" vs "Logged Out" state
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
