@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import connectDB from './lib/db';
 import authRoutes from './routes/authRoutes';
 
 dotenv.config();
@@ -27,3 +28,10 @@ mongoose
     });
   })
   .catch((err) => console.error('DB Connection Error:', err));
+
+const start = async (): Promise<void> => {
+    await connectDB();
+    app.listen(PORT, () => {
+        console.log('Server running at http://localhost: ${PORT}');
+    })
+}
