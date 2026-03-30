@@ -2,5 +2,8 @@
   "name": "project-root",
   "scripts": {
     "install-all": "npm install && cd client && npm install && cd server && npm install"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10"
   }
 }
