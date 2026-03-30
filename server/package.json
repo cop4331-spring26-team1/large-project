@@ -18,6 +18,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^4.x",
     "@types/jsonwebtoken": "^9.x",
+    "@types/next": "^8.0.7",
     "@types/node": "^25.5.0",
     "ts-node-dev": "^2.x",
     "typescript": "^5.x"
