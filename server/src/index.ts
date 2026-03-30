@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { User } from './schema'; 
 
 dotenv.config();
 
@@ -15,6 +16,18 @@ app.use(express.json());
 // Basic Route
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello World');
+});
+
+app.post('/register', async (req: Request, res: Response) => {
+  try {
+    const { username, password, email } = req.body; 
+    const newUser = new User({ username, password, email });
+    await newUser.save();
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (error) {
+    console.error('Registration Error:', error); 
+    res.status(500).json({ message: 'Server error' });
+   }
 });
 
 // MongoDB

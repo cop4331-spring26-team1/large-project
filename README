@@ -22,8 +22,8 @@ API_URL=http://localhost:5000
 
 In `/server/.env`
 ```
+MONGO_URI=mongodb://localhost:27017/LargeProject
 PORT=5000
-MONGO_URI=
 ```
 
 ## Flutter SDK Installation
