@@ -19,15 +19,16 @@ app.get('/', (_req: Request, res: Response) => {
 
 app.use('/api/auth', authRoutes);
 
-mongoose
-  .connect(process.env.MONGO_URI || '')
-  .then(() => {
-    console.log('Connected to MongoDB Atlas');
-    app.listen(PORT, () => {
-      console.log(`Server http://localhost:${PORT}`);
-    });
-  })
-  .catch((err) => console.error('DB Connection Error:', err));
+// Previous Database Connection process. Not in use.
+// mongoose
+//   .connect(process.env.MONGO_URI || '')
+//   .then(() => {
+//     console.log('Connected to MongoDB Atlas');
+//     app.listen(PORT, () => {
+//       console.log(`Server http://localhost:${PORT}`);
+//     });
+//   })
+//   .catch((err) => console.error('DB Connection Error:', err));
 
 const start = async (): Promise<void> => {
     await connectDB();
