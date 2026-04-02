@@ -14,7 +14,7 @@ export interface IListing extends Document {
 const ListingSchema = new Schema({
     title: {type: String, required: true, trim: true},
     description: {type: String, required: true},
-    price: {type: String, required: true, min: 0},
+    price: {type: Number, required: true, min: 0},
     location: {type: String, required: true},
     owner: {type: Schema.Types.ObjectId, ref: 'User', required: true},
     images: [{type: String}],
@@ -22,4 +22,4 @@ const ListingSchema = new Schema({
     dateCreated: {type: Date, default: Date.now}
 })
 
-export default mongoose.model<IListing>('Listing', ListingSchema)
+export default mongoose.model<IListing>('Listing', ListingSchema);

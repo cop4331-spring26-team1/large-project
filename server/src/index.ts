@@ -33,6 +33,8 @@ app.use('/api/auth', authRoutes);
 const start = async (): Promise<void> => {
     await connectDB();
     app.listen(PORT, () => {
-        console.log('Server running at http://localhost: ${PORT}');
+        console.log(`Server running at http://localhost: ${PORT}`);
     })
-}
+};
+
+start();
