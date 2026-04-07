@@ -1,25 +1,58 @@
 import mongoose, {Document, Schema} from 'mongoose'
 
 export interface IListing extends Document {
-    title: string
-    description?: string
-    price: number
-    location: string
-    owner: mongoose.Types.ObjectId
-    images: string[]
-    isActive: boolean
-    dateCreated: Date
+    owner: mongoose.Types.ObjectId;
+    title: string;
+    description: string;
+    price: number;
+    bedrooms: number;
+    petsAllowed: boolean;
+    utilitiesIncluded: boolean;
+    address: string;
+    city: string;
+    state: string;
+    university: string;
+    coordinates:{
+        type: 'Point',
+        coordinates: [number, number];
+    };
+    distanceToCampus: number | null;
+    images: string[];
+    favoriteCount: number;
+    status: 'active' | 'pending' | 'offMarket';
+    boostedUntil: Date | null;
+    expiresAt: Date;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
-const ListingSchema = new Schema({
-    title: {type: String, required: true, trim: true},
-    description: {type: String, required: true},
-    price: {type: Number, required: true, min: 0},
-    location: {type: String, required: true},
-    owner: {type: Schema.Types.ObjectId, ref: 'User', required: true},
-    images: [{type: String}],
-    isActive: {type: Boolean, default: true},
-    dateCreated: {type: Date, default: Date.now}
-})
+const ListingSchema = new Schema<IListing>(
+    {
+        owner:             { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        title:             { type: String, required: true, trim: true },
+        description:       { type: String, required: true },
+        price:             { type: Number, required: true, min: 0 },
+        bedrooms:          { type: Number, required: true, min: 0 },
+        petsAllowed:       { type: Boolean, default: false },
+        utilitiesIncluded: { type: Boolean, default: false },
+        address:           { type: String, required: true },
+        city:              { type: String, required: true },
+        state:             { type: String, required: true },
+        university:        { type: String, required: true },
+        coordinates: {
+            type:        { type: String, enum: ['Point'], default: 'Point' },
+            coordinates: { type: [Number], default: [0, 0] },
+        },
+        distanceToCampus:  { type: Number, default: null },
+        images:            [{ type: String }],
+        favoriteCount:     { type: Number, default: 0 },
+        status:            { type: String, enum: ['active', 'pending', 'offMarket'], default: 'active' },
+        boostedUntil:      { type: Date, default: null },
+        expiresAt:         { type: Date, required: true },
+    },
+    { timestamps: true }
+);
+
+ListingSchema.index({coordinates: '2dsphere'});
 
 export default mongoose.model<IListing>('Listing', ListingSchema);
