@@ -35,12 +35,14 @@ export const getListings = async (req: AuthRequest, res: Response): Promise<void
         ]);
 
         res.status(200).json({
-            items,
-            pagination: {
-                total,
-                page:       Number(page),
-                limit,
-                totalPages: Math.ceil(total / limit),
+            data: {
+                listings: items,
+                pagination: {
+                    total,
+                    page:       Number(page),
+                    limit,
+                    totalPages: Math.ceil(total / limit),
+                },
             },
         });
     } catch (err) {
@@ -52,7 +54,7 @@ export const getListings = async (req: AuthRequest, res: Response): Promise<void
 export const getMine = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const listings = await Listing.find({ owner: req.userId }).sort({ createdAt: -1 });
-        res.status(200).json({ items: listings });
+        res.status(200).json({ data: { listings } });
     } catch (err) {
         console.error('getMine error:', err);
         res.status(500).json({ error: 'Server error' });

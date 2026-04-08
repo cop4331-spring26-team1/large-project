@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import connectDB from './lib/db';
 import authRoutes from './routes/authRoutes';
 import listingRoutes from './routes/listingRoutes';
+import universityRoutes from './routes/universityRoutes';
+
 
 dotenv.config();
 
@@ -21,7 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
 
 // app.use('/api/threads',      threadRoutes);
-// app.use('/api/universities', universityRoutes);
+app.use('/api/universities', universityRoutes);
 // app.use('/api/admin',        adminRoutes);
 
 const start = async (): Promise<void> => {
