@@ -1,31 +1,58 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import Listing from '../models/Listing';
-import {uploadImage, deleteImage as deleteCloudinaryImage} from "../lib/cloudinary";
+import University from '../models/University';
+import { uploadImage, deleteImage as deleteCloudinaryImage } from '../lib/cloudinary';
+
+function haversineMiles(
+    [lng1, lat1]: [number, number],
+    [lng2, lat2]: [number, number]
+): number {
+    const R    = 3958.8;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 export const getListings = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const { state, city, university, minPrice, maxPrice, bedrooms, petsAllowed, utilitiesIncluded, sortBy, page = 1 } = req.query;
+        const {
+            state, city, university, minPrice, maxPrice,
+            bedrooms, petsAllowed, utilitiesIncluded,
+            sortBy, page = 1, lat, lon,
+        } = req.query;
+
         const filter: any = { status: 'active' };
 
-        if (state)              filter.state = state;
-        if (city)               filter.city = city;
-        if (university)         filter.university = university;
-        if (petsAllowed)        filter.petsAllowed = petsAllowed === 'true';
-        if (utilitiesIncluded)  filter.utilitiesIncluded = utilitiesIncluded === 'true';
-        if (bedrooms)           filter.bedrooms = Number(bedrooms);
+        if (state)             filter.state = state;
+        if (city)              filter.city  = city;
+        if (university)        filter.university = university;
+        if (petsAllowed)       filter.petsAllowed = petsAllowed === 'true';
+        if (utilitiesIncluded) filter.utilitiesIncluded = utilitiesIncluded === 'true';
+        if (bedrooms)          filter.bedrooms = Number(bedrooms);
         if (minPrice || maxPrice) {
             filter.price = {};
             if (minPrice) filter.price.$gte = Number(minPrice);
             if (maxPrice) filter.price.$lte = Number(maxPrice);
         }
 
+        const isDistanceSort = sortBy === 'distance_asc' || sortBy === 'distance_desc';
+        const userLat        = lat ? Number(lat) : null;
+        const userLon        = lon ? Number(lon) : null;
+
         const sortOptions: any = {
-            newest:       { createdAt: -1 },
-            price_asc:    { price: 1 },
-            price_desc:   { price: -1 },
+            newest:     { createdAt: -1 },
+            price_asc:  { price: 1 },
+            price_desc: { price: -1 },
         };
-        const sort = sortOptions[sortBy as string] || { createdAt: -1 };
+        const sort = isDistanceSort
+            ? { createdAt: -1 }
+            : (sortOptions[sortBy as string] || { createdAt: -1 });
 
         const limit = 12;
         const skip  = (Number(page) - 1) * limit;
@@ -35,9 +62,18 @@ export const getListings = async (req: AuthRequest, res: Response): Promise<void
             Listing.countDocuments(filter),
         ]);
 
+        let sorted = [...items];
+        if (isDistanceSort && userLat !== null && userLon !== null) {
+            sorted.sort((a, b) => {
+                const distA = haversineMiles([userLon, userLat], a.coordinates.coordinates as [number, number]);
+                const distB = haversineMiles([userLon, userLat], b.coordinates.coordinates as [number, number]);
+                return sortBy === 'distance_asc' ? distA - distB : distB - distA;
+            });
+        }
+
         res.status(200).json({
             data: {
-                listings: items,
+                listings:   sorted,
                 pagination: {
                     total,
                     page:       Number(page),
@@ -64,8 +100,24 @@ export const getMine = async (req: AuthRequest, res: Response): Promise<void> =>
 
 export const getMapPins = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const listings = await Listing.find({ status: 'active' }, '_id title price status images coordinates');
-        res.status(200).json({ items: listings });
+        const { state, city, university, minPrice, maxPrice, bedrooms, petsAllowed, utilitiesIncluded } = req.query;
+
+        const filter: any = { status: 'active' };
+
+        if (state)             filter.state = state;
+        if (city)              filter.city  = city;
+        if (university)        filter.university = university;
+        if (petsAllowed)       filter.petsAllowed = petsAllowed === 'true';
+        if (utilitiesIncluded) filter.utilitiesIncluded = utilitiesIncluded === 'true';
+        if (bedrooms)          filter.bedrooms = Number(bedrooms);
+        if (minPrice || maxPrice) {
+            filter.price = {};
+            if (minPrice) filter.price.$gte = Number(minPrice);
+            if (maxPrice) filter.price.$lte = Number(maxPrice);
+        }
+
+        const listings = await Listing.find(filter, '_id title price status images coordinates');
+        res.status(200).json({ data: { pins: listings } });
     } catch (err) {
         console.error('getMapPins error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -92,18 +144,31 @@ export const createListing = async (req: AuthRequest, res: Response): Promise<vo
             title, description, price, bedrooms,
             petsAllowed, utilitiesIncluded, address,
             city, state, university,
-            lat, lon,
+            confirmedLat, confirmedLon,
         } = req.body;
 
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 60);
 
-        const files = req.files as Express.Multer.File[];
+        const files     = req.files as Express.Multer.File[];
         const imageUrls: string[] = [];
         if (files && files.length > 0) {
             for (const file of files) {
                 const url = await uploadImage(file.buffer, 'listings');
                 imageUrls.push(url);
+            }
+        }
+
+        const lat = Number(confirmedLat) || 0;
+        const lon = Number(confirmedLon) || 0;
+
+        let distanceToCampus: number | null = null;
+        if (lat && lon && university) {
+            const uni = await University.findOne({ name: university });
+            if (uni && uni.coordinates?.coordinates?.length === 2) {
+                distanceToCampus = parseFloat(
+                    haversineMiles([lon, lat], uni.coordinates.coordinates as [number, number]).toFixed(1)
+                );
             }
         }
 
@@ -121,8 +186,9 @@ export const createListing = async (req: AuthRequest, res: Response): Promise<vo
             university,
             coordinates: {
                 type:        'Point',
-                coordinates: [Number(lon) || 0, Number(lat) || 0],
+                coordinates: [lon, lat],
             },
+            distanceToCampus,
             images:   imageUrls,
             expiresAt,
         });
@@ -149,7 +215,8 @@ export const updateListing = async (req: AuthRequest, res: Response): Promise<vo
         const {
             title, description, price, bedrooms,
             petsAllowed, utilitiesIncluded, address,
-            city, state, university, lat, lon,
+            city, state, university,
+            confirmedLat, confirmedLon,
         } = req.body;
 
         const files = req.files as Express.Multer.File[];
@@ -170,11 +237,19 @@ export const updateListing = async (req: AuthRequest, res: Response): Promise<vo
         listing.city              = city              ?? listing.city;
         listing.state             = state             ?? listing.state;
         listing.university        = university        ?? listing.university;
-        if (lat && lon) {
-            listing.coordinates = {
-                type:        'Point',
-                coordinates: [Number(lon), Number(lat)],
-            };
+
+        if (confirmedLat && confirmedLon) {
+            const lat = Number(confirmedLat);
+            const lon = Number(confirmedLon);
+            listing.coordinates = { type: 'Point', coordinates: [lon, lat] };
+
+            const uniName = university ?? listing.university;
+            const uni     = await University.findOne({ name: uniName });
+            if (uni && uni.coordinates?.coordinates?.length === 2) {
+                listing.distanceToCampus = parseFloat(
+                    haversineMiles([lon, lat], uni.coordinates.coordinates as [number, number]).toFixed(1)
+                );
+            }
         }
 
         await listing.save();
@@ -206,7 +281,6 @@ export const updateStatus = async (req: AuthRequest, res: Response): Promise<voi
     }
 };
 
-
 export const toggleFavorite = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const listing = await Listing.findById(req.params.id);
@@ -225,7 +299,7 @@ export const toggleFavorite = async (req: AuthRequest, res: Response): Promise<v
         const alreadyFavorited = user.favorites.some((f: any) => f.toString() === listing._id.toString());
 
         if (alreadyFavorited) {
-            user.favorites  = user.favorites.filter((f: any) => f.toString() !== listing._id.toString());
+            user.favorites        = user.favorites.filter((f: any) => f.toString() !== listing._id.toString());
             listing.favoriteCount = Math.max(0, listing.favoriteCount - 1);
         } else {
             user.favorites.push(listing._id as any);
@@ -260,7 +334,6 @@ export const deleteListing = async (req: AuthRequest, res: Response): Promise<vo
     }
 };
 
-// DELETE /api/listings/:id/image
 export const deleteListingImage = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const listing = await Listing.findById(req.params.id);
