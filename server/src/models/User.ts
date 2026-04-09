@@ -9,6 +9,11 @@ export interface IUser extends Document {
   favorites: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
+  isEmailVerified: boolean;
+  emailVerifyToken?: string;
+  emailVerifyExpires?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -19,6 +24,11 @@ const UserSchema = new Schema<IUser>(
       role:              { type: String, enum: ['user', 'admin'], default: 'user' },
       isVerifiedStudent: { type: Boolean, default: false },
       favorites:         [{ type: Schema.Types.ObjectId, ref: 'Listing' }],
+        isEmailVerified:       { type: Boolean, default: false },
+        emailVerifyToken:      { type: String },
+        emailVerifyExpires:    { type: Date },
+        passwordResetToken:    { type: String },
+        passwordResetExpires:  { type: Date },
     },
     { timestamps: true }
 );
