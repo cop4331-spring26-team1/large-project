@@ -3,7 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import Thread from '../models/Thread';
 import Message from '../models/Message';
 import Listing from '../models/Listing';
-import { io, userSockets } from '../index';
+import { io, userSockets } from '../lib/socket';
 
 export const getThreads = async (req: AuthRequest, res: Response): Promise<void> => {
     try {

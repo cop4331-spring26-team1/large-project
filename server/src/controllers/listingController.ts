@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import Listing from '../models/Listing';
+import {uploadImage, deleteImage as deleteCloudinaryImage} from "../lib/cloudinary";
 
 export const getListings = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
@@ -87,13 +88,27 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 
 export const createListing = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const { title, description, price, bedrooms, petsAllowed, utilitiesIncluded, address, city, state, university } = req.body;
+        const {
+            title, description, price, bedrooms,
+            petsAllowed, utilitiesIncluded, address,
+            city, state, university,
+            lat, lon,
+        } = req.body;
 
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 60); // expires in 60 days
+        expiresAt.setDate(expiresAt.getDate() + 60);
+
+        const files = req.files as Express.Multer.File[];
+        const imageUrls: string[] = [];
+        if (files && files.length > 0) {
+            for (const file of files) {
+                const url = await uploadImage(file.buffer, 'listings');
+                imageUrls.push(url);
+            }
+        }
 
         const listing = await Listing.create({
-            owner: req.userId,
+            owner:             req.userId,
             title,
             description,
             price:             Number(price),
@@ -104,7 +119,11 @@ export const createListing = async (req: AuthRequest, res: Response): Promise<vo
             city,
             state,
             university,
-            images:            [], // image upload handled separately
+            coordinates: {
+                type:        'Point',
+                coordinates: [Number(lon) || 0, Number(lat) || 0],
+            },
+            images:   imageUrls,
             expiresAt,
         });
 
@@ -127,7 +146,19 @@ export const updateListing = async (req: AuthRequest, res: Response): Promise<vo
             return;
         }
 
-        const { title, description, price, bedrooms, petsAllowed, utilitiesIncluded, address, city, state, university } = req.body;
+        const {
+            title, description, price, bedrooms,
+            petsAllowed, utilitiesIncluded, address,
+            city, state, university, lat, lon,
+        } = req.body;
+
+        const files = req.files as Express.Multer.File[];
+        if (files && files.length > 0) {
+            for (const file of files) {
+                const url = await uploadImage(file.buffer, 'listings');
+                listing.images.push(url);
+            }
+        }
 
         listing.title             = title             ?? listing.title;
         listing.description       = description       ?? listing.description;
@@ -139,6 +170,12 @@ export const updateListing = async (req: AuthRequest, res: Response): Promise<vo
         listing.city              = city              ?? listing.city;
         listing.state             = state             ?? listing.state;
         listing.university        = university        ?? listing.university;
+        if (lat && lon) {
+            listing.coordinates = {
+                type:        'Point',
+                coordinates: [Number(lon), Number(lat)],
+            };
+        }
 
         await listing.save();
         res.status(200).json({ data: listing });
@@ -219,6 +256,31 @@ export const deleteListing = async (req: AuthRequest, res: Response): Promise<vo
         res.status(200).json({ message: 'Listing deleted' });
     } catch (err) {
         console.error('deleteListing error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// DELETE /api/listings/:id/image
+export const deleteListingImage = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const listing = await Listing.findById(req.params.id);
+        if (!listing) {
+            res.status(404).json({ error: 'Listing not found' });
+            return;
+        }
+        if (listing.owner.toString() !== req.userId) {
+            res.status(403).json({ error: 'Forbidden' });
+            return;
+        }
+
+        const { imageUrl } = req.body;
+        await deleteCloudinaryImage(imageUrl);
+        listing.images = listing.images.filter((img) => img !== imageUrl);
+        await listing.save();
+
+        res.status(200).json({ data: listing });
+    } catch (err) {
+        console.error('deleteListingImage error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 };

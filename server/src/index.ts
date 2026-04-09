@@ -2,8 +2,8 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
-import { Server } from 'socket.io';
 import connectDB from './lib/db';
+import { initSocket } from './lib/socket';
 import authRoutes from './routes/authRoutes';
 import listingRoutes from './routes/listingRoutes';
 import threadRoutes from './routes/threadRoutes';
@@ -13,12 +13,6 @@ dotenv.config();
 
 const app    = express();
 const server = http.createServer(app);
-const io     = new Server(server, {
-    cors: {
-        origin:      'http://localhost:5173',
-        credentials: true,
-    },
-});
 
 const PORT = process.env.PORT || 5000;
 
@@ -36,22 +30,7 @@ app.use('/api/universities', universityRoutes);
 
 // app.use('/api/admin', adminRoutes);
 
-const userSockets = new Map<string, string>() // userId -> socketId
-
-io.on('connection', (socket) => {
-    const userId = socket.handshake.auth.userId as string
-    if (userId) userSockets.set(userId, socket.id)
-
-    socket.on('joinThread', (threadId: string) => {
-        socket.join(threadId)
-    })
-
-    socket.on('disconnect', () => {
-        userSockets.delete(userId)
-    })
-})
-
-export { io, userSockets }
+initSocket(server);
 
 const start = async (): Promise<void> => {
     await connectDB();
