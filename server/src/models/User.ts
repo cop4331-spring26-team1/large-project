@@ -5,6 +5,7 @@ export interface IUser extends Document {
   email: string;
   hashedPassword: string;
   role: 'user' | 'admin';
+  isBlocked: boolean;
   isVerifiedStudent: boolean;
   favorites: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -22,6 +23,7 @@ const UserSchema = new Schema<IUser>(
       email:             { type: String, required: true, unique: true, lowercase: true },
       hashedPassword:    { type: String, required: true },
       role:              { type: String, enum: ['user', 'admin'], default: 'user' },
+      isBlocked:         { type: Boolean, default: false },
       isVerifiedStudent: { type: Boolean, default: false },
       favorites:         [{ type: Schema.Types.ObjectId, ref: 'Listing' }],
         isEmailVerified:       { type: Boolean, default: false },

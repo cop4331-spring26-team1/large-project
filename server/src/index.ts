@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes';
 import listingRoutes from './routes/listingRoutes';
 import threadRoutes from './routes/threadRoutes';
 import universityRoutes from './routes/universityRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 dotenv.config();
 
@@ -27,8 +28,7 @@ app.use('/api/auth',         authRoutes);
 app.use('/api/listings',     listingRoutes);
 app.use('/api/threads',      threadRoutes);
 app.use('/api/universities', universityRoutes);
-
-// app.use('/api/admin', adminRoutes);
+app.use('/api/admin',        adminRoutes);
 
 initSocket(server);
 

@@ -61,6 +61,10 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ error: 'Invalid credentials' });
       return;
     }
+    if (user.isBlocked) {
+      res.status(403).json({ error: 'Account is blocked' });
+      return;
+    }
 
     const validPassword = await bcrypt.compare(password, user.hashedPassword);
     if (!validPassword) {
