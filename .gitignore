@@ -1,9 +1,10 @@
+.idea
+
 # --- Node.js (Server & Client) ---
 node_modules/
 .eslintcache
 .next/
 out/
 build/
-dist/
 
 **/.env
