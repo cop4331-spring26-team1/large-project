@@ -60,6 +60,11 @@ export const getUnreadCount = async (req: AuthRequest, res: Response): Promise<v
 
 export const createThread = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+        if (!req.isEmailVerified) {
+            res.status(403).json({ error: 'Please verify your email before messaging.' });
+            return;
+        }
+
         const { listingId, message: messageBody = 'Hi, I am interested in your listing!' } = req.body;
 
         const listing = await Listing.findById(listingId);

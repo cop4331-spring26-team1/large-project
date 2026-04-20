@@ -2,8 +2,9 @@ import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 
 export interface AuthRequest extends Request {
-    userId?: string;
-    userRole?: string;
+    userId?:          string;
+    userRole?:        string;
+    isEmailVerified?: boolean;
 }
 
 export const protect = (req: AuthRequest, res: Response, next: NextFunction): void => {
@@ -18,11 +19,13 @@ export const protect = (req: AuthRequest, res: Response, next: NextFunction): vo
 
     try {
         const payload = jwt.verify(token, process.env.JWT_SECRET!) as {
-            userId: string;
-            role: string;
+            userId:          string;
+            role:            string;
+            isEmailVerified: boolean;
         };
-        req.userId   = payload.userId;
-        req.userRole = payload.role;
+        req.userId          = payload.userId;
+        req.userRole        = payload.role;
+        req.isEmailVerified = payload.isEmailVerified;
         next();
     } catch {
         res.status(401).json({ error: 'Invalid or expired token' });
