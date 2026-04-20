@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import Listing from '../models/Listing';
+import User from '../models/User';
 import University from '../models/University';
 import { uploadImage, deleteImage as deleteCloudinaryImage } from '../lib/cloudinary';
 
@@ -29,12 +30,12 @@ export const getListings = async (req: AuthRequest, res: Response): Promise<void
 
         const filter: any = { status: 'active' };
 
-        if (state)             filter.state = state;
-        if (city)              filter.city  = city;
-        if (university)        filter.university = university;
-        if (petsAllowed)       filter.petsAllowed = petsAllowed === 'true';
+        if (state)             filter.state             = state;
+        if (city)              filter.city              = city;
+        if (university)        filter.university        = university;
+        if (petsAllowed)       filter.petsAllowed       = petsAllowed === 'true';
         if (utilitiesIncluded) filter.utilitiesIncluded = utilitiesIncluded === 'true';
-        if (bedrooms)          filter.bedrooms = Number(bedrooms);
+        if (bedrooms)          filter.bedrooms          = Number(bedrooms);
         if (minPrice || maxPrice) {
             filter.price = {};
             if (minPrice) filter.price.$gte = Number(minPrice);
@@ -58,7 +59,11 @@ export const getListings = async (req: AuthRequest, res: Response): Promise<void
         const skip  = (Number(page) - 1) * limit;
 
         const [items, total] = await Promise.all([
-            Listing.find(filter).populate('owner', 'name isVerifiedStudent').sort(sort).skip(skip).limit(limit),
+            Listing.find(filter)
+                .populate('owner', 'name isVerifiedStudent')
+                .sort(sort)
+                .skip(skip)
+                .limit(limit),
             Listing.countDocuments(filter),
         ]);
 
@@ -71,14 +76,17 @@ export const getListings = async (req: AuthRequest, res: Response): Promise<void
             });
         }
 
+        const currentPage = Number(page);
+
         res.status(200).json({
             data: {
                 listings:   sorted,
                 pagination: {
                     total,
-                    page:       Number(page),
+                    page:       currentPage,
                     limit,
                     totalPages: Math.ceil(total / limit),
+                    hasMore:    currentPage * limit < total,
                 },
             },
         });
@@ -104,12 +112,12 @@ export const getMapPins = async (req: AuthRequest, res: Response): Promise<void>
 
         const filter: any = { status: 'active' };
 
-        if (state)             filter.state = state;
-        if (city)              filter.city  = city;
-        if (university)        filter.university = university;
-        if (petsAllowed)       filter.petsAllowed = petsAllowed === 'true';
+        if (state)             filter.state             = state;
+        if (city)              filter.city              = city;
+        if (university)        filter.university        = university;
+        if (petsAllowed)       filter.petsAllowed       = petsAllowed === 'true';
         if (utilitiesIncluded) filter.utilitiesIncluded = utilitiesIncluded === 'true';
-        if (bedrooms)          filter.bedrooms = Number(bedrooms);
+        if (bedrooms)          filter.bedrooms          = Number(bedrooms);
         if (minPrice || maxPrice) {
             filter.price = {};
             if (minPrice) filter.price.$gte = Number(minPrice);
@@ -150,7 +158,7 @@ export const createListing = async (req: AuthRequest, res: Response): Promise<vo
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 60);
 
-        const files     = req.files as Express.Multer.File[];
+        const files      = req.files as Express.Multer.File[];
         const imageUrls: string[] = [];
         if (files && files.length > 0) {
             for (const file of files) {
@@ -229,9 +237,9 @@ export const updateListing = async (req: AuthRequest, res: Response): Promise<vo
 
         listing.title             = title             ?? listing.title;
         listing.description       = description       ?? listing.description;
-        listing.price             = price             ? Number(price) : listing.price;
+        listing.price             = price             ? Number(price)    : listing.price;
         listing.bedrooms          = bedrooms          ? Number(bedrooms) : listing.bedrooms;
-        listing.petsAllowed       = petsAllowed       !== undefined ? petsAllowed === 'true' : listing.petsAllowed;
+        listing.petsAllowed       = petsAllowed       !== undefined ? petsAllowed === 'true'       : listing.petsAllowed;
         listing.utilitiesIncluded = utilitiesIncluded !== undefined ? utilitiesIncluded === 'true' : listing.utilitiesIncluded;
         listing.address           = address           ?? listing.address;
         listing.city              = city              ?? listing.city;
@@ -289,7 +297,6 @@ export const toggleFavorite = async (req: AuthRequest, res: Response): Promise<v
             return;
         }
 
-        const User = (await import('../models/User')).default;
         const user = await User.findById(req.userId);
         if (!user) {
             res.status(404).json({ error: 'User not found' });
@@ -307,7 +314,7 @@ export const toggleFavorite = async (req: AuthRequest, res: Response): Promise<v
         }
 
         await Promise.all([user.save(), listing.save()]);
-        res.status(200).json({ isFavorited: !alreadyFavorited, favoriteCount: listing.favoriteCount });
+        res.status(200).json({ data: { isFavorited: !alreadyFavorited, favoriteCount: listing.favoriteCount } });
     } catch (err) {
         console.error('toggleFavorite error:', err);
         res.status(500).json({ error: 'Server error' });

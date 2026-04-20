@@ -11,7 +11,7 @@ export const getThreads = async (req: AuthRequest, res: Response): Promise<void>
             participants: req.userId,
             deletedBy:    { $ne: req.userId },
         })
-            .populate('participants', 'name email')
+            .populate('participants', 'name email isVerifiedStudent')
             .sort({ lastMessageAt: -1 });
 
         const withMeta = await Promise.all(threads.map(async (t) => {
@@ -45,13 +45,13 @@ export const getUnreadCount = async (req: AuthRequest, res: Response): Promise<v
 
         const threadIds = threads.map((t) => t._id);
 
-        const count = await Message.countDocuments({
+        const unreadCount = await Message.countDocuments({
             thread: { $in: threadIds },
             sender: { $ne: req.userId },
             readBy: { $ne: req.userId },
         });
 
-        res.status(200).json({ data: { count } });
+        res.status(200).json({ data: { unreadCount } });
     } catch (err) {
         console.error('getUnreadCount error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -60,14 +60,13 @@ export const getUnreadCount = async (req: AuthRequest, res: Response): Promise<v
 
 export const createThread = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const { listingId } = req.body;
+        const { listingId, message: messageBody = 'Hi, I am interested in your listing!' } = req.body;
 
         const listing = await Listing.findById(listingId);
         if (!listing) {
             res.status(404).json({ error: 'Listing not found' });
             return;
         }
-
         if (listing.owner.toString() === req.userId) {
             res.status(400).json({ error: 'You cannot message your own listing' });
             return;
@@ -77,7 +76,6 @@ export const createThread = async (req: AuthRequest, res: Response): Promise<voi
             listing:      listingId,
             participants: { $all: [req.userId, listing.owner] },
         });
-
         if (existing) {
             res.status(200).json({ data: { thread: existing } });
             return;
@@ -92,6 +90,15 @@ export const createThread = async (req: AuthRequest, res: Response): Promise<voi
                 price:     listing.price,
                 status:    listing.status,
             },
+            lastMessage:   messageBody,
+            lastMessageAt: new Date(),
+        });
+
+        await Message.create({
+            thread: thread._id,
+            sender: req.userId,
+            body:   messageBody,
+            readBy: [req.userId],
         });
 
         res.status(201).json({ data: { thread } });
@@ -122,7 +129,7 @@ export const getMessages = async (req: AuthRequest, res: Response): Promise<void
             { $push: { readBy: req.userId } }
         );
 
-        res.status(200).json({ data: {messages} });
+        res.status(200).json({ data: { messages } });
     } catch (err) {
         console.error('getMessages error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -154,27 +161,24 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
 
         thread.lastMessage   = req.body.body;
         thread.lastMessageAt = new Date();
-
-        thread.deletedBy = thread.deletedBy.filter((id: any) => id.toString() !== req.userId);
+        thread.deletedBy     = thread.deletedBy.filter((id: any) => id.toString() !== req.userId);
         await thread.save();
 
         const populated = await message.populate('sender', 'name email');
 
-        const thread2 = await Thread.findById(req.params.id);
-        if (thread2) {
-            thread2.participants.forEach((p: any) => {
-                if (p.toString() !== req.userId) {
-                    const recipientSocketId = userSockets.get(p.toString());
-                    if (recipientSocketId) {
-                        io.to(recipientSocketId).emit('newMessage', {
-                            threadId: req.params.id,
-                            message:  populated,
-                        });
-                        io.to(recipientSocketId).emit('unreadCountUpdate');
-                    }
+        thread.participants.forEach((p: any) => {
+            if (p.toString() !== req.userId) {
+                const recipientSocketId = userSockets.get(p.toString());
+                if (recipientSocketId) {
+                    io.to(recipientSocketId).emit('newMessage', {
+                        threadId: req.params.id,
+                        message:  populated,
+                    });
+                    io.to(recipientSocketId).emit('unreadCountUpdate');
                 }
-            });
-        }
+            }
+        });
+
         res.status(201).json({ data: { message: populated } });
     } catch (err) {
         console.error('sendMessage error:', err);

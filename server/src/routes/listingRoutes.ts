@@ -16,7 +16,7 @@ import {
 
 const router = express.Router();
 
-router.get('/', protect, getListings);
+router.get('/', getListings);
 router.get('/mine', protect, getMine);
 router.get('/map', getMapPins);
 router.get('/:id', getById);

@@ -6,6 +6,24 @@ import User from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../lib/mailer';
 
+const signToken = (userId: string, email: string, role: string): string => {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) throw new Error('JWT_SECRET not set');
+  return jwt.sign({ userId, email, role }, jwtSecret, { expiresIn: '7d' });
+};
+
+const serializeUser = (user: InstanceType<typeof User>) => ({
+  _id:               user._id,
+  name:              user.name,
+  email:             user.email,
+  role:              user.role,
+  isAdmin:           user.isAdmin,
+  isVerifiedStudent: user.isVerifiedStudent,
+  isEmailVerified:   user.isEmailVerified,
+  avatarKey:         user.avatarKey,
+  favorites:         user.favorites,
+});
+
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password } = req.body;
@@ -21,17 +39,16 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    const hashedPassword     = await bcrypt.hash(password, 10);
     const emailVerifyToken   = crypto.randomBytes(32).toString('hex');
-    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const user = await User.create({
       name,
-      email: email.toLowerCase(),
+      email:            email.toLowerCase(),
       hashedPassword,
-      role:               'user',
-      isEmailVerified:    false,
+      role:             'user',
+      isEmailVerified:  false,
       emailVerifyToken,
       emailVerifyExpires,
     });
@@ -72,29 +89,13 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      res.status(500).json({ error: 'Server configuration error' });
-      return;
-    }
-
-    const token = jwt.sign(
-        { userId: user._id.toString(), email: user.email, role: user.role },
-        jwtSecret,
-        { expiresIn: '7d' }
-    );
+    const token = signToken(user._id.toString(), user.email, user.role);
 
     res.status(200).json({
       message: 'Login successful',
       data: {
         token,
-        user: {
-          _id:              user._id,
-          name:             user.name,
-          email:            user.email,
-          role:             user.role,
-          isEmailVerified:  user.isEmailVerified,
-        },
+        user: serializeUser(user),
       },
     });
   } catch (err) {
@@ -105,7 +106,10 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
 export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.userId).select('-hashedPassword -emailVerifyToken -passwordResetToken');
+    const user = await User
+        .findById(req.userId)
+        .select('-hashedPassword -emailVerifyToken -passwordResetToken')
+        .populate('favorites');
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
@@ -113,6 +117,27 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
     res.status(200).json({ data: user });
   } catch (err) {
     console.error('getMe error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const updateMe = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { name, avatarKey } = req.body;
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    if (name)      user.name      = name;
+    if (avatarKey) user.avatarKey = avatarKey;
+    await user.save();
+
+    res.status(200).json({ data: { user: serializeUser(user) } });
+  } catch (err) {
+    console.error('updateMe error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -136,24 +161,13 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
     user.emailVerifyExpires = undefined;
     await user.save();
 
-    const jwtSecret = process.env.JWT_SECRET!;
-    const jwt = require('jsonwebtoken').sign(
-        { userId: user._id.toString(), email: user.email, role: user.role },
-        jwtSecret,
-        { expiresIn: '7d' }
-    );
+    const authToken = signToken(user._id.toString(), user.email, user.role);
 
     res.status(200).json({
       message: 'Email verified successfully',
       data: {
-        token: jwt,
-        user: {
-          _id:             user._id,
-          name:            user.name,
-          email:           user.email,
-          role:            user.role,
-          isEmailVerified: user.isEmailVerified,
-        },
+        token: authToken,
+        user:  serializeUser(user),
       },
     });
   } catch (err) {
@@ -172,14 +186,11 @@ export const resendVerification = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    const emailVerifyToken   = crypto.randomBytes(32).toString('hex');
-    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    user.emailVerifyToken   = emailVerifyToken;
-    user.emailVerifyExpires = emailVerifyExpires;
+    user.emailVerifyToken   = crypto.randomBytes(32).toString('hex');
+    user.emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.save();
 
-    await sendVerificationEmail(user.email, user.name, emailVerifyToken);
+    await sendVerificationEmail(user.email, user.name, user.emailVerifyToken);
 
     res.status(200).json({ message: 'If that email exists, a verification link has been sent.' });
   } catch (err) {
@@ -198,14 +209,11 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const passwordResetToken   = crypto.randomBytes(32).toString('hex');
-    const passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-    user.passwordResetToken   = passwordResetToken;
-    user.passwordResetExpires = passwordResetExpires;
+    user.passwordResetToken   = crypto.randomBytes(32).toString('hex');
+    user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
     await user.save();
 
-    await sendPasswordResetEmail(user.email, user.name, passwordResetToken);
+    await sendPasswordResetEmail(user.email, user.name, user.passwordResetToken);
 
     res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
   } catch (err) {
@@ -229,7 +237,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    user.hashedPassword      = await bcrypt.hash(password, 10);
+    user.hashedPassword       = await bcrypt.hash(password, 10);
     user.passwordResetToken   = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
