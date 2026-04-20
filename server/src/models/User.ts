@@ -1,66 +1,40 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IUser extends Document {
-    name: string;
-    email: string;
-    hashedPassword: string;
-    university: string;
-    profilePhoto?: string;
-    rating: number;
-    role: 'user' | 'admin';
-    createdAt: Date;
-    updatedAt: Date;
+  name: string;
+  email: string;
+  hashedPassword: string;
+  role: 'user' | 'admin';
+  isBlocked: boolean;
+  isVerifiedStudent: boolean;
+  favorites: mongoose.Types.ObjectId[];
+  createdAt: Date;
+  updatedAt: Date;
+  isEmailVerified: boolean;
+  emailVerifyToken?: string;
+  emailVerifyExpires?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
 }
 
 const UserSchema = new Schema<IUser>(
     {
-        name: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-        },
-
-        hashedPassword: {
-            type: String,
-            required: true,
-        },
-
-        university: {
-            type: String,
-            required: true,
-            trim: true,
-            index: true,
-        },
-
-        profilePhoto: {
-            type: String,
-            default: '',
-        },
-
-        rating: {
-            type: Number,
-            default: 0.0,
-            min: 0,
-            max: 5,
-        },
-
-        role: {
-            type: String,
-            enum: ['user', 'admin'],
-            default: 'user',
-        },
+      name:              { type: String, required: true, trim: true },
+      email:             { type: String, required: true, unique: true, lowercase: true },
+      hashedPassword:    { type: String, required: true },
+      role:              { type: String, enum: ['user', 'admin'], default: 'user' },
+      isBlocked:         { type: Boolean, default: false },
+      isVerifiedStudent: { type: Boolean, default: false },
+      favorites:         [{ type: Schema.Types.ObjectId, ref: 'Listing' }],
+        isEmailVerified:       { type: Boolean, default: false },
+        emailVerifyToken:      { type: String },
+        emailVerifyExpires:    { type: Date },
+        passwordResetToken:    { type: String },
+        passwordResetExpires:  { type: Date },
     },
-    {
-        timestamps: true,
-    }
+    { timestamps: true }
 );
 
-export default mongoose.model<IUser>('User', UserSchema);
+const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+
+export default User;

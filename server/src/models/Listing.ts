@@ -1,113 +1,58 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IListing extends Document {
-    hostId: mongoose.Types.ObjectId;
+    owner: mongoose.Types.ObjectId;
     title: string;
     description: string;
-    address: {
-        street: string;
-        city: string;
-        state: string;
-        zip: string;
-    };
     price: number;
-    availableFrom: Date;
-    availableTo: Date;
-    photos: string[];
-    amenities: string[];
-    roomType: 'private' | 'shared';
     bedrooms: number;
-    bathrooms: number;
     petsAllowed: boolean;
     utilitiesIncluded: boolean;
-    isActive: boolean;
+    address: string;
+    city: string;
+    state: string;
+    university: string;
+    coordinates:{
+        type: 'Point',
+        coordinates: [number, number];
+    };
+    distanceToCampus: number | null;
+    images: string[];
+    favoriteCount: number;
+    status: 'active' | 'pending' | 'offMarket';
+    boostedUntil: Date | null;
+    expiresAt: Date;
     createdAt: Date;
     updatedAt: Date;
 }
 
 const ListingSchema = new Schema<IListing>(
     {
-        hostId: {
-            type: Schema.Types.ObjectId,
-            ref: 'User',
-            required: true,
-            index: true,
+        owner:             { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        title:             { type: String, required: true, trim: true },
+        description:       { type: String, required: true },
+        price:             { type: Number, required: true, min: 0 },
+        bedrooms:          { type: Number, required: true, min: 0 },
+        petsAllowed:       { type: Boolean, default: false },
+        utilitiesIncluded: { type: Boolean, default: false },
+        address:           { type: String, required: true },
+        city:              { type: String, required: true },
+        state:             { type: String, required: true },
+        university:        { type: String, required: true },
+        coordinates: {
+            type:        { type: String, enum: ['Point'], default: 'Point' },
+            coordinates: { type: [Number], default: [0, 0] },
         },
-        title: {
-            type: String,
-            required: true,
-            trim: true,
-            maxlength: 100,
-        },
-        description: {
-            type: String,
-            required: true,
-            trim: true,
-            maxlength: 2000,
-        },
-        address: {
-            street: { type: String, required: true, trim: true },
-            city:   { type: String, required: true, trim: true },
-            state:  { type: String, required: true, trim: true },
-            zip:    { type: String, required: true, trim: true },
-        },
-        price: {
-            type: Number,
-            required: true,
-            min: 0,
-        },
-        availableFrom: {
-            type: Date,
-            required: true,
-        },
-        availableTo: {
-            type: Date,
-            required: true,
-        },
-        photos: {
-            type: [String],
-            default: [],
-        },
-        amenities: {
-            type: [String],
-            default: [],
-        },
-        roomType: {
-            type: String,
-            enum: ['private', 'shared'],
-            required: true,
-        },
-        bedrooms: {
-            type: Number,
-            required: true,
-            min: 1,
-        },
-        bathrooms: {
-            type: Number,
-            required: true,
-            min: 1,
-        },
-        petsAllowed: {
-            type: Boolean,
-            default: false,
-        },
-        utilitiesIncluded: {
-            type: Boolean,
-            default: false,
-        },
-        isActive: {
-            type: Boolean,
-            default: true,
-            index: true,
-        },
+        distanceToCampus:  { type: Number, default: null },
+        images:            [{ type: String }],
+        favoriteCount:     { type: Number, default: 0 },
+        status:            { type: String, enum: ['active', 'pending', 'offMarket'], default: 'active' },
+        boostedUntil:      { type: Date, default: null },
+        expiresAt:         { type: Date, required: true },
     },
-    {
-        timestamps: true,
-    }
+    { timestamps: true }
 );
 
-ListingSchema.index({ isActive: 1, price: 1 });
-
-ListingSchema.index({ availableFrom: 1, availableTo: 1 });
+ListingSchema.index({coordinates: '2dsphere'});
 
 export default mongoose.model<IListing>('Listing', ListingSchema);

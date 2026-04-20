@@ -1,31 +1,32 @@
 {
-  "name": "client",
-  "version": "0.1.0",
-  "private": true,
+  "name": "letsmovnow-frontend",
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
-    "next": "14.x",
-    "react": "^18",
-    "react-dom": "^18",
-    "next-auth": "^4.x",
-    "axios": "^1.x",
-    "zod": "^3.x",
-    "react-hook-form": "^7.x",
-    "@hookform/resolvers": "^3.x"
+    "axios": "^1.6.2",
+    "date-fns": "^3.0.6",
+    "leaflet": "^1.9.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1",
+    "react-router-dom": "^6.21.0",
+    "socket.io-client": "^4.6.2"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.1",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@types/leaflet": "^1.9.8",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.55.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8"
   }
 }
