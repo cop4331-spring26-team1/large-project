@@ -1,19 +1,21 @@
 import express from 'express';
 import { protect, adminOnly } from '../middleware/auth';
+const router = express.Router();
+
 import {
   getUsersAdmin,
   updateUserAdmin,
+  deleteUserAdmin,
   getListingsAdmin,
+  reactivateListingAdmin,
   deleteListingAdmin,
 } from '../controllers/adminController';
 
-const router = express.Router();
-
-router.use(protect, adminOnly);
-
-router.get('/users', getUsersAdmin);
-router.patch('/users/:id', updateUserAdmin);
-router.get('/listings', getListingsAdmin);
-router.delete('/listings/:id', deleteListingAdmin);
+router.get('/users',                        getUsersAdmin);
+router.patch('/users/:id',                  updateUserAdmin);
+router.delete('/users/:id',                 deleteUserAdmin);
+router.get('/listings',                     getListingsAdmin);
+router.patch('/listings/:id/reactivate',    reactivateListingAdmin);
+router.delete('/listings/:id',              deleteListingAdmin);
 
 export default router;

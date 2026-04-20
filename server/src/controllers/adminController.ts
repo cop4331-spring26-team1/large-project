@@ -158,3 +158,41 @@ export const deleteListingAdmin = async (req: AuthRequest, res: Response): Promi
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+export const deleteUserAdmin = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    if (user._id.toString() === req.userId) {
+      res.status(400).json({ error: 'You cannot delete your own account' });
+      return;
+    }
+
+    await user.deleteOne();
+    res.status(200).json({ message: 'User deleted' });
+  } catch (err) {
+    console.error('deleteUserAdmin error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const reactivateListingAdmin = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) {
+      res.status(404).json({ error: 'Listing not found' });
+      return;
+    }
+
+    listing.status = 'active';
+    await listing.save();
+
+    res.status(200).json({ data: listing });
+  } catch (err) {
+    console.error('reactivateListingAdmin error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
