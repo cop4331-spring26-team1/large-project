@@ -1,5 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth }  from './context/AuthContext'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 import { SocketProvider }         from './context/SocketContext'
 import Navbar                     from './components/layout/Navbar'
 import Footer                     from './components/layout/Footer'
@@ -40,7 +47,8 @@ const GuestRoute = ({ children }: { children: React.ReactNode }) => {
 }
 
 const AppRoutes = () => (
-  <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+  <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'var(--app-height, 100dvh)' }}>
+    <ScrollToTop />
     <Navbar />
     <main style={{ flex: 1 }}>
       <Routes>

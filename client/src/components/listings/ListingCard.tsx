@@ -9,10 +9,10 @@ interface Props {
   onFavoriteChange?: (id: string, isFavorited: boolean, count: number) => void
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  active:    'Active',
-  pending:   'In Talks',
-  offMarket: 'Off Market',
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  active:    { label: 'Available', color: '#34C759' },
+  pending:   { label: 'In Talks',  color: '#FFCC00' },
+  offMarket: { label: 'Off Market', color: '#FF3B30' },
 }
 
 export default function ListingCard({ listing, onFavoriteChange }: Props) {
@@ -52,10 +52,7 @@ export default function ListingCard({ listing, onFavoriteChange }: Props) {
     }
   }
 
-  const statusClass =
-    listing.status === 'active'    ? 'badge-active'
-    : listing.status === 'pending' ? 'badge-pending'
-    : 'badge-offmarket'
+  const statusCfg = STATUS_CONFIG[listing.status] ?? STATUS_CONFIG.offMarket
 
   return (
     <Link to={`/listings/${listing._id}`} style={{ textDecoration: 'none' }}>
@@ -73,13 +70,6 @@ export default function ListingCard({ listing, onFavoriteChange }: Props) {
           {isBoosted && (
             <div style={styles.boostedRibbon}>⚡ Featured</div>
           )}
-
-          {/* Status badge */}
-          <div style={styles.statusBadge}>
-            <span className={`badge ${statusClass}`}>
-              {STATUS_LABELS[listing.status]}
-            </span>
-          </div>
 
           {/* Heart button — top right */}
           <button
@@ -122,6 +112,9 @@ export default function ListingCard({ listing, onFavoriteChange }: Props) {
           <div style={styles.priceRow}>
             <span style={styles.price}>${listing.price.toLocaleString()}</span>
             <span style={styles.priceSub}>/mo</span>
+            <span style={{ flex: 1 }} />
+            <span style={{ ...styles.statusDot, background: statusCfg.color, boxShadow: `0 0 6px ${statusCfg.color}88` }} />
+            <span style={{ fontSize: 11, fontWeight: 500, color: statusCfg.color }}>{statusCfg.label}</span>
           </div>
           <h3 style={styles.title}>{listing.title}</h3>
           <p style={styles.location}>
@@ -160,11 +153,11 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
   },
   imageWrap: {
-    position:   'relative',
-    height:     200,
-    overflow:   'hidden',
-    background: '#252A4A',
-    flexShrink: 0,
+    position:    'relative',
+    aspectRatio: '16/9',
+    overflow:    'hidden',
+    background:  '#252A4A',
+    flexShrink:  0,
   },
   image: {
     width:      '100%',
@@ -184,10 +177,8 @@ const styles: Record<string, React.CSSProperties> = {
     padding:    '3px 10px',
     borderRadius: 20,
   },
-  statusBadge: {
-    position: 'absolute',
-    bottom:   12,
-    left:     12,
+  statusDot: {
+    width: 8, height: 8, borderRadius: '50%', display: 'inline-block', marginRight: 4, flexShrink: 0,
   },
   heartBtn: {
     position:        'absolute',
