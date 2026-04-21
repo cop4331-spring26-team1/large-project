@@ -148,8 +148,7 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 
 export const createListing = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-
-        if (!req.isVerifiedStudent) {
+        if (!req.isVerifiedStudent && req.userRole !== 'admin') {
             res.status(403).json({ error: 'Only verified students can create listings.' });
             return;
         }
@@ -216,7 +215,7 @@ export const createListing = async (req: AuthRequest, res: Response): Promise<vo
 
 export const updateListing = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        if (!req.isVerifiedStudent) {
+        if (!req.isVerifiedStudent && req.userRole !== 'admin') {
             res.status(403).json({ error: 'Only verified students can edit listings.' });
             return;
         }
@@ -226,7 +225,7 @@ export const updateListing = async (req: AuthRequest, res: Response): Promise<vo
             res.status(404).json({ error: 'Listing not found' });
             return;
         }
-        if (listing.owner.toString() !== req.userId) {
+        if (listing.owner.toString() !== req.userId && req.userRole !== 'admin') {
             res.status(403).json({ error: 'Forbidden' });
             return;
         }

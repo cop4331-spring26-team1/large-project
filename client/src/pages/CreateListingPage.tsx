@@ -159,11 +159,6 @@ function ListingForm({ editId }: { editId?: string }) {
       } else {
         await listingsApi.create(fd)
       }
-
-      if (!req.user.isVerifiedStudent && req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Only verified students can create listings.' });
-      }
-
       navigate('/my-listings')
     } catch (err: any) {
       setError(err.response?.data?.error || err.response?.data?.message || 'Failed to save listing')
