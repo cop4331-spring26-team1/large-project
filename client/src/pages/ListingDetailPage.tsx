@@ -40,14 +40,14 @@ export default function ListingDetailPage() {
   useEffect(() => {
     if (!id) return
     listingsApi.getById(id)
-      .then((res) => {
-        const l = res.data.data
-        setListing(l)
-        setFav(l.isFavorited ?? false)
-        setFavCount(l.favoriteCount)
-      })
-      .catch(() => navigate('/'))
-      .finally(() => setLoading(false))
+        .then((res) => {
+          const l = res.data.data
+          setListing(l)
+          setFav(l.isFavorited ?? false)
+          setFavCount(l.favoriteCount)
+        })
+        .catch(() => navigate('/'))
+        .finally(() => setLoading(false))
   }, [id])
 
   const handleFavorite = async () => {
@@ -60,8 +60,8 @@ export default function ListingDetailPage() {
       setFavCount(data.favoriteCount)
       if (user) {
         const favs = data.isFavorited
-          ? [...user.favorites, listing!._id]
-          : user.favorites.filter((f) => f !== listing!._id)
+            ? [...user.favorites, listing!._id]
+            : user.favorites.filter((f) => f !== listing!._id)
         updateUser({ ...user, favorites: favs })
       }
     } catch {}
@@ -73,9 +73,7 @@ export default function ListingDetailPage() {
     try {
       const res = await chatApi.createThread(listing!._id)
       navigate(`/chat/${res.data.data.thread._id}`)
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Could not start conversation')
-    } finally { setContacting(false) }
+    } catch {} finally { setContacting(false) }
   }
 
   const handleStatusChange = async (status: string) => {
@@ -83,9 +81,7 @@ export default function ListingDetailPage() {
     try {
       await listingsApi.updateStatus(listing!._id, status as any)
       setListing((prev) => prev ? { ...prev, status: status as any } : prev)
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update status')
-    } finally { setStatusLoading(false) }
+    } catch {} finally { setStatusLoading(false) }
   }
 
   if (loading) return <div className="loading-center"><div className="spinner" /></div>
@@ -95,199 +91,199 @@ export default function ListingDetailPage() {
   const isOwn = listing.isOwnListing
 
   return (
-    <div className="page">
-      <div className="container" style={{ maxWidth: 960 }}>
-        {/* Breadcrumb */}
-        <div style={styles.crumb}>
-          <Link to="/" style={{ color: '#9BA3C7' }}>Browse</Link>
-          <span style={{ color: '#5C6490' }}> / </span>
-          <span style={{ color: '#F0F2FF' }}>{listing.title}</span>
-        </div>
-
-        <div style={styles.layout} className="listing-detail-layout">
-          {/* Left — images + info */}
-          <div style={styles.left}>
-            {/* Main image */}
-            <div style={styles.mainImgWrap} className="listing-detail-img">
-              <img src={listing.images[activeImg]} alt={listing.title} style={styles.mainImg} />
-              {/* Status banner for off market */}
-              {listing.status === 'offMarket' && (
-                <div style={styles.offMarketBanner}>
-                  🔴 This listing is no longer available
-                </div>
-              )}
-              {listing.status === 'pending' && (
-                <div style={styles.pendingBanner}>
-                  ⏳ Lister is currently in talks with someone
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnails */}
-            {listing.images.length > 1 && (
-              <div style={styles.thumbs}>
-                {listing.images.map((img, i) => (
-                  <button
-                    key={i}
-                    style={{ ...styles.thumb, ...(i === activeImg ? styles.thumbActive : {}) }}
-                    onClick={() => setActiveImg(i)}
-                  >
-                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Details */}
-            <div style={styles.section}>
-              <div style={styles.priceRow}>
-                <span style={styles.price}>${listing.price.toLocaleString()}</span>
-                <span style={{ color: '#9BA3C7', fontSize: 16 }}>/month</span>
-                <span style={{ ...styles.statusPill, background: `${statusInfo.color}22`, color: statusInfo.color }}>
-                  {statusInfo.label}
-                </span>
-              </div>
-              <h1 style={styles.title}>{listing.title}</h1>
-              <p style={styles.location}>
-                📍 {listing.address}, {listing.city}, {listing.state}
-              </p>
-              <p style={{ color: '#9BA3C7', fontSize: 14 }}>
-                🏫 {listing.university}
-                {listing.distanceToCampus != null && ` · ${listing.distanceToCampus} miles to campus`}
-              </p>
-            </div>
-
-            <hr className="divider" />
-
-            {/* Tags */}
-            <div style={styles.tagsRow}>
-              <div style={styles.tagItem}>
-                <span style={styles.tagIcon}>🛏</span>
-                <div>
-                  <div style={styles.tagLabel}>Bedrooms</div>
-                  <div style={styles.tagVal}>{listing.bedrooms === 0 ? 'Studio' : listing.bedrooms}</div>
-                </div>
-              </div>
-              <div style={styles.tagItem}>
-                <span style={styles.tagIcon}>{listing.utilitiesIncluded ? '✅' : '❌'}</span>
-                <div>
-                  <div style={styles.tagLabel}>Utilities</div>
-                  <div style={styles.tagVal}>{listing.utilitiesIncluded ? 'Included' : 'Not included'}</div>
-                </div>
-              </div>
-              <div style={styles.tagItem}>
-                <span style={styles.tagIcon}>{listing.petsAllowed ? '🐾' : '🚫'}</span>
-                <div>
-                  <div style={styles.tagLabel}>Pets</div>
-                  <div style={styles.tagVal}>{listing.petsAllowed ? 'Allowed' : 'Not allowed'}</div>
-                </div>
-              </div>
-            </div>
-
-            <hr className="divider" />
-
-            {/* Description */}
-            {listing.description && (
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>About this place</h3>
-                <p style={{ color: '#9BA3C7', lineHeight: 1.8, whiteSpace: 'pre-line' }}>
-                  {listing.description}
-                </p>
-              </div>
-            )}
+      <div className="page">
+        <div className="container" style={{ maxWidth: 960 }}>
+          {/* Breadcrumb */}
+          <div style={styles.crumb}>
+            <Link to="/" style={{ color: '#9BA3C7' }}>Browse</Link>
+            <span style={{ color: '#5C6490' }}> / </span>
+            <span style={{ color: '#F0F2FF' }}>{listing.title}</span>
           </div>
 
-          {/* Right — sidebar (on mobile: shown below via CSS order) */}
-          <div style={styles.sidebar} className="listing-detail-sidebar">
-            {/* Lister info */}
-            <div style={styles.sideCard}>
-              <div style={styles.sideCardTitle}>Listed by</div>
-              <div style={styles.listerRow}>
-                <div style={styles.avatar}>
-                  {listing.owner.name.charAt(0).toUpperCase()}
+          <div style={styles.layout} className="listing-detail-layout">
+            {/* Left — images + info */}
+            <div style={styles.left}>
+              {/* Main image */}
+              <div style={styles.mainImgWrap} className="listing-detail-img">
+                <img src={listing.images[activeImg]} alt={listing.title} style={styles.mainImg} />
+                {/* Status banner for off market */}
+                {listing.status === 'offMarket' && (
+                    <div style={styles.offMarketBanner}>
+                      🔴 This listing is no longer available
+                    </div>
+                )}
+                {listing.status === 'pending' && (
+                    <div style={styles.pendingBanner}>
+                      ⏳ Lister is currently in talks with someone
+                    </div>
+                )}
+              </div>
+
+              {/* Thumbnails */}
+              {listing.images.length > 1 && (
+                  <div style={styles.thumbs}>
+                    {listing.images.map((img, i) => (
+                        <button
+                            key={i}
+                            style={{ ...styles.thumb, ...(i === activeImg ? styles.thumbActive : {}) }}
+                            onClick={() => setActiveImg(i)}
+                        >
+                          <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </button>
+                    ))}
+                  </div>
+              )}
+
+              {/* Details */}
+              <div style={styles.section}>
+                <div style={styles.priceRow}>
+                  <span style={styles.price}>${listing.price.toLocaleString()}</span>
+                  <span style={{ color: '#9BA3C7', fontSize: 16 }}>/month</span>
+                  <span style={{ ...styles.statusPill, background: `${statusInfo.color}22`, color: statusInfo.color }}>
+                  {statusInfo.label}
+                </span>
                 </div>
-                <div>
-                  <div style={{ fontWeight: 600, color: '#F0F2FF' }}>{listing.owner.name}</div>
-                  {listing.owner.isVerifiedStudent && (
-                    <div style={{ fontSize: 12, color: '#4ECDC4' }}>✓ Verified Student</div>
-                  )}
+                <h1 style={styles.title}>{listing.title}</h1>
+                <p style={styles.location}>
+                  📍 {listing.address}, {listing.city}, {listing.state}
+                </p>
+                <p style={{ color: '#9BA3C7', fontSize: 14 }}>
+                  🏫 {listing.university}
+                  {listing.distanceToCampus != null && ` · ${listing.distanceToCampus} miles to campus`}
+                </p>
+              </div>
+
+              <hr className="divider" />
+
+              {/* Tags */}
+              <div style={styles.tagsRow}>
+                <div style={styles.tagItem}>
+                  <span style={styles.tagIcon}>🛏</span>
+                  <div>
+                    <div style={styles.tagLabel}>Bedrooms</div>
+                    <div style={styles.tagVal}>{listing.bedrooms === 0 ? 'Studio' : listing.bedrooms}</div>
+                  </div>
+                </div>
+                <div style={styles.tagItem}>
+                  <span style={styles.tagIcon}>{listing.utilitiesIncluded ? '✅' : '❌'}</span>
+                  <div>
+                    <div style={styles.tagLabel}>Utilities</div>
+                    <div style={styles.tagVal}>{listing.utilitiesIncluded ? 'Included' : 'Not included'}</div>
+                  </div>
+                </div>
+                <div style={styles.tagItem}>
+                  <span style={styles.tagIcon}>{listing.petsAllowed ? '🐾' : '🚫'}</span>
+                  <div>
+                    <div style={styles.tagLabel}>Pets</div>
+                    <div style={styles.tagVal}>{listing.petsAllowed ? 'Allowed' : 'Not allowed'}</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Favorite count visible to owner */}
-              {isOwn && (
-                <div style={styles.ownerFavRow}>
-                  <span style={{ color: '#FF6B6B' }}>♥</span>
-                  <span style={{ color: '#9BA3C7', fontSize: 14 }}>{favCount} people saved this</span>
-                </div>
-              )}
+              <hr className="divider" />
 
-              {/* Actions */}
-              {!isOwn && listing.status !== 'offMarket' && (
-                <>
-                  <button
-                    style={{
-                      ...styles.heartSideBtn,
-                      background: isFavorited ? 'rgba(255,107,107,0.15)' : 'rgba(255,255,255,0.05)',
-                      borderColor: isFavorited ? 'rgba(255,107,107,0.4)' : 'rgba(255,255,255,0.1)',
-                      color: isFavorited ? '#FF6B6B' : '#9BA3C7',
-                    }}
-                    onClick={handleFavorite}
-                  >
-                    {isFavorited ? '♥ Saved' : '♡ Save'} · {favCount}
-                  </button>
-                  <button
-                    className="btn btn-primary btn-full"
-                    onClick={handleContact}
-                    disabled={contacting}
-                    style={{ marginTop: 10 }}
-                  >
-                    {contacting ? 'Opening chat...' : '💬 Contact Lister'}
-                  </button>
-                </>
-              )}
-
-              {/* Owner controls */}
-              {isOwn && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                  <Link to={`/listings/${listing._id}/edit`} className="btn btn-outline btn-full">
-                    ✏️ Edit Listing
-                  </Link>
-                  {listing.status === 'active' && (
-                    <button
-                      className="btn btn-ghost btn-full"
-                      onClick={() => handleStatusChange('pending')}
-                      disabled={statusLoading}
-                    >
-                      ⏳ Mark as Pending
-                    </button>
-                  )}
-                  {listing.status === 'pending' && (
-                    <button
-                      className="btn btn-ghost btn-full"
-                      onClick={() => handleStatusChange('active')}
-                      disabled={statusLoading}
-                    >
-                      ✅ Mark as Active
-                    </button>
-                  )}
-                </div>
+              {/* Description */}
+              {listing.description && (
+                  <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>About this place</h3>
+                    <p style={{ color: '#9BA3C7', lineHeight: 1.8, whiteSpace: 'pre-line' }}>
+                      {listing.description}
+                    </p>
+                  </div>
               )}
             </div>
 
-            {/* Expiry info */}
-            <div style={styles.expiryCard}>
-              <div style={{ fontSize: 12, color: '#5C6490' }}>
-                Listed {new Date(listing.createdAt).toLocaleDateString()}
+            {/* Right — sidebar (on mobile: shown below via CSS order) */}
+            <div style={styles.sidebar} className="listing-detail-sidebar">
+              {/* Lister info */}
+              <div style={styles.sideCard}>
+                <div style={styles.sideCardTitle}>Listed by</div>
+                <div style={styles.listerRow}>
+                  <div style={styles.avatar}>
+                    {listing.owner.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#F0F2FF' }}>{listing.owner.name}</div>
+                    {listing.owner.isVerifiedStudent && (
+                        <div style={{ fontSize: 12, color: '#4ECDC4' }}>✓ Verified Student</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Favorite count visible to owner */}
+                {isOwn && (
+                    <div style={styles.ownerFavRow}>
+                      <span style={{ color: '#FF6B6B' }}>♥</span>
+                      <span style={{ color: '#9BA3C7', fontSize: 14 }}>{favCount} people saved this</span>
+                    </div>
+                )}
+
+                {/* Actions */}
+                {!isOwn && listing.status !== 'offMarket' && (
+                    <>
+                      <button
+                          style={{
+                            ...styles.heartSideBtn,
+                            background: isFavorited ? 'rgba(255,107,107,0.15)' : 'rgba(255,255,255,0.05)',
+                            borderColor: isFavorited ? 'rgba(255,107,107,0.4)' : 'rgba(255,255,255,0.1)',
+                            color: isFavorited ? '#FF6B6B' : '#9BA3C7',
+                          }}
+                          onClick={handleFavorite}
+                      >
+                        {isFavorited ? '♥ Saved' : '♡ Save'} · {favCount}
+                      </button>
+                      <button
+                          className="btn btn-primary btn-full"
+                          onClick={handleContact}
+                          disabled={contacting}
+                          style={{ marginTop: 10 }}
+                      >
+                        {contacting ? 'Opening chat...' : '💬 Contact Lister'}
+                      </button>
+                    </>
+                )}
+
+                {/* Owner controls */}
+                {isOwn && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                      <Link to={`/listings/${listing._id}/edit`} className="btn btn-outline btn-full">
+                        ✏️ Edit Listing
+                      </Link>
+                      {listing.status === 'active' && (
+                          <button
+                              className="btn btn-ghost btn-full"
+                              onClick={() => handleStatusChange('pending')}
+                              disabled={statusLoading}
+                          >
+                            ⏳ Mark as Pending
+                          </button>
+                      )}
+                      {listing.status === 'pending' && (
+                          <button
+                              className="btn btn-ghost btn-full"
+                              onClick={() => handleStatusChange('active')}
+                              disabled={statusLoading}
+                          >
+                            ✅ Mark as Active
+                          </button>
+                      )}
+                    </div>
+                )}
               </div>
-              <div style={{ fontSize: 12, color: '#5C6490', marginTop: 2 }}>
-                Expires {new Date(listing.expiresAt).toLocaleDateString()}
+
+              {/* Expiry info */}
+              <div style={styles.expiryCard}>
+                <div style={{ fontSize: 12, color: '#5C6490' }}>
+                  Listed {new Date(listing.createdAt).toLocaleDateString()}
+                </div>
+                <div style={{ fontSize: 12, color: '#5C6490', marginTop: 2 }}>
+                  Expires {new Date(listing.expiresAt).toLocaleDateString()}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
   )
 }
 

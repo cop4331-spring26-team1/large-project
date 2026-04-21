@@ -280,6 +280,11 @@ export const updateListing = async (req: AuthRequest, res: Response): Promise<vo
 
 export const updateStatus = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+        if (!req.isVerifiedStudent && req.userRole !== 'admin') {
+            res.status(403).json({ error: 'Only verified students can update listing status.' });
+            return;
+        }
+
         const listing = await Listing.findById(req.params.id);
         if (!listing) {
             res.status(404).json({ error: 'Listing not found' });
@@ -333,6 +338,11 @@ export const toggleFavorite = async (req: AuthRequest, res: Response): Promise<v
 
 export const deleteListing = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+        if (!req.isVerifiedStudent && req.userRole !== 'admin') {
+            res.status(403).json({ error: 'Only verified students can delete listings.' });
+            return;
+        }
+
         const listing = await Listing.findById(req.params.id);
         if (!listing) {
             res.status(404).json({ error: 'Listing not found' });
@@ -353,6 +363,11 @@ export const deleteListing = async (req: AuthRequest, res: Response): Promise<vo
 
 export const deleteListingImage = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+        if (!req.isVerifiedStudent && req.userRole !== 'admin') {
+            res.status(403).json({ error: 'Only verified students can remove listing images.' });
+            return;
+        }
+
         const listing = await Listing.findById(req.params.id);
         if (!listing) {
             res.status(404).json({ error: 'Listing not found' });

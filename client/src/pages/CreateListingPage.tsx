@@ -92,7 +92,7 @@ function ListingForm({ editId }: { editId?: string }) {
     try {
       await listingsApi.deleteImage(editId, url)
       setExisting((prev) => prev.filter((u) => u !== url))
-    } catch { alert('Failed to remove image') }
+    } catch {}
   }
 
   const searchAddress = async () => {
@@ -174,212 +174,212 @@ function ListingForm({ editId }: { editId?: string }) {
   }
 
   return (
-    <div className="page">
-      <div className="container" style={{ maxWidth: 680 }}>
-        <h1 style={styles.heading}>{editId ? 'Edit Listing' : 'List a Room'}</h1>
-        <p style={styles.sub}>{editId ? 'Update your listing details.' : 'Fill in the details below — distance to campus is calculated automatically.'}</p>
+      <div className="page">
+        <div className="container" style={{ maxWidth: 680 }}>
+          <h1 style={styles.heading}>{editId ? 'Edit Listing' : 'List a Room'}</h1>
+          <p style={styles.sub}>{editId ? 'Update your listing details.' : 'Fill in the details below — distance to campus is calculated automatically.'}</p>
 
-        <form onSubmit={submit} style={styles.form}>
-          {error && <div style={styles.error}>{error}</div>}
+          <form onSubmit={submit} style={styles.form}>
+            {error && <div style={styles.error}>{error}</div>}
 
-          {/* Title */}
-          <div className="form-group">
-            <label className="form-label">Title *</label>
-            <input className="form-input" placeholder="e.g. Cozy 1BR near UCF, all utilities included" value={form.title} onChange={(e) => f('title', e.target.value)} required maxLength={100} />
-          </div>
-
-          {/* Price + Bedrooms */}
-          <div style={styles.row2}>
+            {/* Title */}
             <div className="form-group">
-              <label className="form-label">Monthly Rent ($) *</label>
-              <input className="form-input" type="number" placeholder="950" value={form.price} onChange={(e) => f('price', e.target.value)} required min={0} />
+              <label className="form-label">Title *</label>
+              <input className="form-input" placeholder="e.g. Cozy 1BR near UCF, all utilities included" value={form.title} onChange={(e) => f('title', e.target.value)} required maxLength={100} />
             </div>
-            <div className="form-group">
-              <label className="form-label">Bedrooms *</label>
-              <select className="form-select" value={form.bedrooms} onChange={(e) => f('bedrooms', e.target.value)}>
-                <option value="0">Studio</option>
-                <option value="1">1 Bedroom</option>
-                <option value="2">2 Bedrooms</option>
-                <option value="3">3 Bedrooms</option>
-                <option value="4">4+ Bedrooms</option>
-              </select>
-            </div>
-          </div>
 
-          {/* Pets + Utilities */}
-          <div style={styles.row2}>
-            <div className="form-group">
-              <label className="form-label">Pet Policy *</label>
-              <select className="form-select" value={form.petsAllowed} onChange={(e) => f('petsAllowed', e.target.value)}>
-                <option value="false">No pets</option>
-                <option value="true">Pets allowed</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Utilities *</label>
-              <select className="form-select" value={form.utilitiesIncluded} onChange={(e) => f('utilitiesIncluded', e.target.value)}>
-                <option value="false">Not included</option>
-                <option value="true">Included in rent</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Step 1 — University */}
-          <div className="form-group" style={{ position: 'relative' }}>
-            <label className="form-label">University *</label>
-            <input
-              className="form-input"
-              placeholder="Start typing your university..."
-              value={uniQuery}
-              onChange={(e) => { setUniQuery(e.target.value); setForm((p) => ({ ...p, university: '', city: '', state: '' })); setAddressConfirmed(false); setConfirmedCoords(null) }}
-              required
-            />
-            <span className="form-hint">Select your university first — city and state will be set automatically</span>
-            {showUni && uniList.length > 0 && (
-              <div style={styles.suggestions}>
-                {uniList.map((u) => (
-                  <button key={u._id} type="button" style={styles.suggestion} onClick={() => selectUni(u)}>
-                    <span style={{ fontWeight: 600, color: '#F0F2FF', fontSize: 14 }}>{u.name}</span>
-                    <span style={{ fontSize: 12, color: '#9BA3C7' }}>{u.city}, {u.state}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* City + State — read only, set by university */}
-          {form.city && form.state && (
+            {/* Price + Bedrooms */}
             <div style={styles.row2}>
               <div className="form-group">
-                <label className="form-label">City</label>
-                <input className="form-input" value={form.city} readOnly style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+                <label className="form-label">Monthly Rent ($) *</label>
+                <input className="form-input" type="number" placeholder="950" value={form.price} onChange={(e) => f('price', e.target.value)} required min={0} />
               </div>
               <div className="form-group">
-                <label className="form-label">State</label>
-                <input className="form-input" value={form.state} readOnly style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+                <label className="form-label">Bedrooms *</label>
+                <select className="form-select" value={form.bedrooms} onChange={(e) => f('bedrooms', e.target.value)}>
+                  <option value="0">Studio</option>
+                  <option value="1">1 Bedroom</option>
+                  <option value="2">2 Bedrooms</option>
+                  <option value="3">3 Bedrooms</option>
+                  <option value="4">4+ Bedrooms</option>
+                </select>
               </div>
             </div>
-          )}
 
-          {/* Step 2 — Address (only shown after university is selected) */}
-          {form.university && (
-            <>
+            {/* Pets + Utilities */}
+            <div style={styles.row2}>
               <div className="form-group">
-                <label className="form-label">Street Address *</label>
-                <input
-                  className="form-input"
-                  placeholder="e.g. 123 College Ave"
-                  value={form.address}
-                  onChange={(e) => f('address', e.target.value)}
-                  required
-                />
-                <span className="form-hint">Enter the street number and name only — not shown publicly</span>
+                <label className="form-label">Pet Policy *</label>
+                <select className="form-select" value={form.petsAllowed} onChange={(e) => f('petsAllowed', e.target.value)}>
+                  <option value="false">No pets</option>
+                  <option value="true">Pets allowed</option>
+                </select>
               </div>
+              <div className="form-group">
+                <label className="form-label">Utilities *</label>
+                <select className="form-select" value={form.utilitiesIncluded} onChange={(e) => f('utilitiesIncluded', e.target.value)}>
+                  <option value="false">Not included</option>
+                  <option value="true">Included in rent</option>
+                </select>
+              </div>
+            </div>
 
-              {/* Address verification */}
-              <div style={styles.addressVerify}>
-                {addressConfirmed ? (
-                  <div style={styles.addressConfirmed}>
-                    ✓ Address confirmed — this listing will appear on the map
-                    <button type="button" style={styles.changeBtn} onClick={() => { setAddressConfirmed(false); setConfirmedCoords(null); setAddressResults([]) }}>
-                      Change
-                    </button>
-                  </div>
-                ) : (
-                  <button type="button" style={styles.searchBtn} onClick={searchAddress} disabled={addressSearching || !form.address}>
-                    {addressSearching ? 'Searching...' : '🔍 Verify Address on Map'}
-                  </button>
-                )}
-
-                {addressResults.length > 0 && (
-                  <div style={styles.resultsBox}>
-                    <p style={styles.resultsHint}>Select the correct address:</p>
-                    {addressResults.map((r, i) => (
-                      <button key={i} type="button" style={styles.resultItem} onClick={() => confirmAddress(r)}>
-                        📍 {r.display_name}
-                      </button>
+            {/* Step 1 — University */}
+            <div className="form-group" style={{ position: 'relative' }}>
+              <label className="form-label">University *</label>
+              <input
+                  className="form-input"
+                  placeholder="Start typing your university..."
+                  value={uniQuery}
+                  onChange={(e) => { setUniQuery(e.target.value); setForm((p) => ({ ...p, university: '', city: '', state: '' })); setAddressConfirmed(false); setConfirmedCoords(null) }}
+                  required
+              />
+              <span className="form-hint">Select your university first — city and state will be set automatically</span>
+              {showUni && uniList.length > 0 && (
+                  <div style={styles.suggestions}>
+                    {uniList.map((u) => (
+                        <button key={u._id} type="button" style={styles.suggestion} onClick={() => selectUni(u)}>
+                          <span style={{ fontWeight: 600, color: '#F0F2FF', fontSize: 14 }}>{u.name}</span>
+                          <span style={{ fontSize: 12, color: '#9BA3C7' }}>{u.city}, {u.state}</span>
+                        </button>
                     ))}
                   </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Description */}
-          <div className="form-group">
-            <label className="form-label">Description</label>
-            <textarea className="form-textarea" placeholder="Describe the space, amenities, neighborhood, lease terms..." value={form.description} onChange={(e) => f('description', e.target.value)} style={{ minHeight: 120 }} />
-          </div>
-
-          {/* Status — edit only */}
-          {editId && (
-            <div className="form-group">
-              <label className="form-label">Listing Status</label>
-              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                {[
-                  { value: 'active',    label: 'Available', color: '#34C759' },
-                  { value: 'pending',   label: 'In Talks',  color: '#FFCC00' },
-                  { value: 'offMarket', label: 'Off Market', color: '#FF3B30' },
-                ].map((s) => (
-                  <button
-                    key={s.value}
-                    type="button"
-                    onClick={() => setStatus(s.value)}
-                    style={{
-                      flex: 1, padding: '10px 8px', borderRadius: 10, border: `1.5px solid`,
-                      borderColor: status === s.value ? s.color : 'rgba(255,255,255,0.1)',
-                      background: status === s.value ? `${s.color}22` : 'rgba(255,255,255,0.03)',
-                      color: status === s.value ? s.color : '#9BA3C7',
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontWeight: 600, fontSize: 13, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    }}
-                  >
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, display: 'inline-block' }} />
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+              )}
             </div>
-          )}
 
-          {/* Images */}
-          <div className="form-group">
-            <label className="form-label">Photos {!editId && '*'}</label>
-            {existingImgs.length > 0 && (
-              <div style={styles.thumbRow}>
-                {existingImgs.map((url) => (
-                  <div key={url} style={styles.thumbWrap}>
-                    <img src={url} style={styles.thumbImg} alt="" />
-                    <button type="button" style={styles.removeThumb} aria-label="Remove image" onClick={() => removeExisting(url)}>✕</button>
+            {/* City + State — read only, set by university */}
+            {form.city && form.state && (
+                <div style={styles.row2}>
+                  <div className="form-group">
+                    <label className="form-label">City</label>
+                    <input className="form-input" value={form.city} readOnly style={{ opacity: 0.6, cursor: 'not-allowed' }} />
                   </div>
-                ))}
-              </div>
-            )}
-            <input type="file" accept="image/*" multiple onChange={handleImages} style={{ display: 'none' }} id="img-upload" />
-            <label htmlFor="img-upload" style={styles.uploadBtn}>
-              📷 {images.length > 0 ? `${images.length} photo(s) selected` : 'Choose photos'}
-            </label>
-            {previews.length > 0 && (
-              <div style={styles.thumbRow}>
-                {previews.map((src, i) => (
-                  <div key={i} style={styles.thumbWrap}>
-                    <img src={src} style={styles.thumbImg} alt="" />
+                  <div className="form-group">
+                    <label className="form-label">State</label>
+                    <input className="form-input" value={form.state} readOnly style={{ opacity: 0.6, cursor: 'not-allowed' }} />
                   </div>
-                ))}
-              </div>
+                </div>
             )}
-            <span className="form-hint">First photo becomes the main card image. Max 10 photos, 5MB each.</span>
-          </div>
 
-          <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading} style={{ marginTop: 8 }}>
-            {loading ? 'Saving...' : editId ? 'Save Changes' : 'Post Listing'}
-          </button>
-        </form>
+            {/* Step 2 — Address (only shown after university is selected) */}
+            {form.university && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Street Address *</label>
+                    <input
+                        className="form-input"
+                        placeholder="e.g. 123 College Ave"
+                        value={form.address}
+                        onChange={(e) => f('address', e.target.value)}
+                        required
+                    />
+                    <span className="form-hint">Enter the street number and name only — not shown publicly</span>
+                  </div>
+
+                  {/* Address verification */}
+                  <div style={styles.addressVerify}>
+                    {addressConfirmed ? (
+                        <div style={styles.addressConfirmed}>
+                          ✓ Address confirmed — this listing will appear on the map
+                          <button type="button" style={styles.changeBtn} onClick={() => { setAddressConfirmed(false); setConfirmedCoords(null); setAddressResults([]) }}>
+                            Change
+                          </button>
+                        </div>
+                    ) : (
+                        <button type="button" style={styles.searchBtn} onClick={searchAddress} disabled={addressSearching || !form.address}>
+                          {addressSearching ? 'Searching...' : '🔍 Verify Address on Map'}
+                        </button>
+                    )}
+
+                    {addressResults.length > 0 && (
+                        <div style={styles.resultsBox}>
+                          <p style={styles.resultsHint}>Select the correct address:</p>
+                          {addressResults.map((r, i) => (
+                              <button key={i} type="button" style={styles.resultItem} onClick={() => confirmAddress(r)}>
+                                📍 {r.display_name}
+                              </button>
+                          ))}
+                        </div>
+                    )}
+                  </div>
+                </>
+            )}
+
+            {/* Description */}
+            <div className="form-group">
+              <label className="form-label">Description</label>
+              <textarea className="form-textarea" placeholder="Describe the space, amenities, neighborhood, lease terms..." value={form.description} onChange={(e) => f('description', e.target.value)} style={{ minHeight: 120 }} />
+            </div>
+
+            {/* Status — edit only */}
+            {editId && (
+                <div className="form-group">
+                  <label className="form-label">Listing Status</label>
+                  <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                    {[
+                      { value: 'active',    label: 'Available', color: '#34C759' },
+                      { value: 'pending',   label: 'In Talks',  color: '#FFCC00' },
+                      { value: 'offMarket', label: 'Off Market', color: '#FF3B30' },
+                    ].map((s) => (
+                        <button
+                            key={s.value}
+                            type="button"
+                            onClick={() => setStatus(s.value)}
+                            style={{
+                              flex: 1, padding: '10px 8px', borderRadius: 10, border: `1.5px solid`,
+                              borderColor: status === s.value ? s.color : 'rgba(255,255,255,0.1)',
+                              background: status === s.value ? `${s.color}22` : 'rgba(255,255,255,0.03)',
+                              color: status === s.value ? s.color : '#9BA3C7',
+                              fontFamily: "'Plus Jakarta Sans', sans-serif",
+                              fontWeight: 600, fontSize: 13, cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            }}
+                        >
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, display: 'inline-block' }} />
+                          {s.label}
+                        </button>
+                    ))}
+                  </div>
+                </div>
+            )}
+
+            {/* Images */}
+            <div className="form-group">
+              <label className="form-label">Photos {!editId && '*'}</label>
+              {existingImgs.length > 0 && (
+                  <div style={styles.thumbRow}>
+                    {existingImgs.map((url) => (
+                        <div key={url} style={styles.thumbWrap}>
+                          <img src={url} style={styles.thumbImg} alt="" />
+                          <button type="button" style={styles.removeThumb} aria-label="Remove image" onClick={() => removeExisting(url)}>✕</button>
+                        </div>
+                    ))}
+                  </div>
+              )}
+              <input type="file" accept="image/*" multiple onChange={handleImages} style={{ display: 'none' }} id="img-upload" />
+              <label htmlFor="img-upload" style={styles.uploadBtn}>
+                📷 {images.length > 0 ? `${images.length} photo(s) selected` : 'Choose photos'}
+              </label>
+              {previews.length > 0 && (
+                  <div style={styles.thumbRow}>
+                    {previews.map((src, i) => (
+                        <div key={i} style={styles.thumbWrap}>
+                          <img src={src} style={styles.thumbImg} alt="" />
+                        </div>
+                    ))}
+                  </div>
+              )}
+              <span className="form-hint">First photo becomes the main card image. Max 10 photos, 5MB each.</span>
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading} style={{ marginTop: 8 }}>
+              {loading ? 'Saving...' : editId ? 'Save Changes' : 'Post Listing'}
+            </button>
+          </form>
+        </div>
+
+        {showUni && <div style={{ position: 'fixed', inset: 0, zIndex: 9 }} onClick={() => setShowUni(false)} />}
       </div>
-
-      {showUni && <div style={{ position: 'fixed', inset: 0, zIndex: 9 }} onClick={() => setShowUni(false)} />}
-    </div>
   )
 }
 
