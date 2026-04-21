@@ -148,6 +148,12 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 
 export const createListing = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+
+        if (!req.isVerifiedStudent) {
+            res.status(403).json({ error: 'Only verified students can create listings.' });
+            return;
+        }
+
         const {
             title, description, price, bedrooms,
             petsAllowed, utilitiesIncluded, address,
@@ -210,6 +216,11 @@ export const createListing = async (req: AuthRequest, res: Response): Promise<vo
 
 export const updateListing = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+        if (!req.isVerifiedStudent) {
+            res.status(403).json({ error: 'Only verified students can edit listings.' });
+            return;
+        }
+
         const listing = await Listing.findById(req.params.id);
         if (!listing) {
             res.status(404).json({ error: 'Listing not found' });

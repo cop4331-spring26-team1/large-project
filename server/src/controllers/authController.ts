@@ -6,10 +6,10 @@ import User from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../lib/mailer';
 
-const signToken = (userId: string, email: string, role: string, isEmailVerified: boolean): string => {
+const signToken = (userId: string, email: string, role: string, isEmailVerified: boolean, isVerifiedStudent: boolean): string => {
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) throw new Error('JWT_SECRET not set');
-  return jwt.sign({ userId, email, role, isEmailVerified }, jwtSecret, { expiresIn: '7d' });
+  return jwt.sign({ userId, email, role, isEmailVerified, isVerifiedStudent}, jwtSecret, { expiresIn: '7d' });
 };
 
 const serializeUser = (user: InstanceType<typeof User>) => ({
@@ -89,7 +89,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = signToken(user._id.toString(), user.email, user.role, user.isEmailVerified);
+    const token = signToken(user._id.toString(), user.email, user.role, user.isEmailVerified, user.isVerifiedStudent);
 
     res.status(200).json({
       message: 'Login successful',
@@ -161,7 +161,7 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
     user.emailVerifyExpires = undefined;
     await user.save();
 
-    const authToken = signToken(user._id.toString(), user.email, user.role, user.isEmailVerified);
+    const authToken = signToken(user._id.toString(), user.email, user.role, user.isEmailVerified, user.isVerifiedStudent);
 
     res.status(200).json({
       message: 'Email verified successfully',
