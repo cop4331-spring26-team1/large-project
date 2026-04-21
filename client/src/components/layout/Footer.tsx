@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 export default function Footer() {
   return (
-    <footer style={styles.footer}>
+    <footer style={styles.footer} className="desktop-footer">
       <div style={styles.inner}>
         <div style={styles.brand}>
           <span style={styles.logo}>🏠 LetsMovNow</span>

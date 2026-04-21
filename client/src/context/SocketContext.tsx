@@ -9,6 +9,8 @@ interface SocketContextType {
   socket: Socket | null
   unreadCount: number
   setUnreadCount: (n: number) => void
+  activeThreadId: string | null
+  setActiveThreadId: (id: string | null) => void
 }
 
 const SocketContext = createContext<SocketContextType | null>(null)
@@ -18,48 +20,49 @@ const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || (import.
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const { user, isAuthenticated } = useAuth()
   const socketRef = useRef<Socket | null>(null)
+  const [socket, setSocket] = useState<Socket | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null)
+  const activeThreadIdRef = useRef<string | null>(null)
+
+  const handleSetActiveThreadId = (id: string | null) => {
+    activeThreadIdRef.current = id
+    setActiveThreadId(id)
+  }
 
   useEffect(() => {
-    if (!isAuthenticated || !user) {
-      // Disconnect if user logs out
-      if (socketRef.current) {
-        socketRef.current.disconnect()
-        socketRef.current = null
-      }
-      setUnreadCount(0)
-      return
-    }
-
-    // Connect with user ID for routing events
+    // Connect for everyone — guests get broadcasts, auth users get personal events too
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const socket = io(SOCKET_URL, {
-      auth: { userId: user._id },
-    } as any)
+    const s = io(SOCKET_URL, { auth: { userId: user?._id ?? null } } as any)
 
-    socket.on('connect', () => {
-      console.log('Socket connected')
+    s.on('connect', () => {
+      setSocket(s) // triggers re-render so consumers get the real socket
     })
 
-    // Nav badge — unread messages
-    socket.on('unreadCountUpdate', () => {
-      // Trigger a refetch by bumping the count signal
-      setUnreadCount((prev) => prev + 1)
+    // Live unread badge — fires on any page when a new message arrives
+    s.on('newMessage', ({ threadId }: { threadId: string }) => {
+      if (activeThreadIdRef.current !== threadId) {
+        setUnreadCount((prev) => prev + 1)
+      }
     })
 
-    socketRef.current = socket
+    socketRef.current = s
 
     return () => {
-      socket.disconnect()
+      s.disconnect()
       socketRef.current = null
+      setSocket(null)
+      setUnreadCount(0)
     }
   }, [isAuthenticated, user])
 
   return (
     <SocketContext.Provider value={{
-      socket:        socketRef.current,
+      socket,
       unreadCount,
       setUnreadCount,
+      activeThreadId,
+      setActiveThreadId: handleSetActiveThreadId,
     }}>
       {children}
     </SocketContext.Provider>

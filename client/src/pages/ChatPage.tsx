@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { chatApi } from '../api'
 import { useAuth }   from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
@@ -8,7 +8,7 @@ import type { Thread, Message } from '../types'
 export default function ChatPage() {
   const { threadId }  = useParams<{ threadId?: string }>()
   const { user }      = useAuth()
-  const { socket, setUnreadCount } = useSocket()
+  const { socket, setUnreadCount, setActiveThreadId } = useSocket()
 
   const [threads, setThreads]     = useState<Thread[]>([])
   const [active, setActive]       = useState<Thread | null>(null)
@@ -16,7 +16,8 @@ export default function ChatPage() {
   const [body, setBody]           = useState('')
   const [sending, setSending]     = useState(false)
   const [totalUnread, setTotalUnread] = useState(0)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const bottomRef  = useRef<HTMLDivElement>(null)
+  const inputRef   = useRef<HTMLInputElement>(null)
 
   // Load threads
   useEffect(() => {
@@ -57,29 +58,34 @@ export default function ChatPage() {
 
   const openThread = async (thread: Thread) => {
     setActive(thread)
+    setActiveThreadId(thread._id)
     if (socket) {
       socket.emit('joinThread', thread._id)
     }
     const res = await chatApi.getMessages(thread._id)
     setMessages(res.data.data.messages)
-    // Clear unread for this thread and update navbar badge
-    const wasUnread = thread.unreadCount || 0
+    // Clear unread for this thread locally
     setThreads((prev) => prev.map((t) => t._id === thread._id ? { ...t, unreadCount: 0 } : t))
-    if (wasUnread > 0) {
-      const newTotal = Math.max(0, totalUnread - wasUnread)
-      setTotalUnread(newTotal)
-      setUnreadCount(newTotal)
-    }
+    // Re-fetch accurate count from server (getMessages marks them read server-side)
+    chatApi.getUnreadCount()
+      .then((r) => {
+        const fresh = r.data.data.unreadCount
+        setTotalUnread(fresh)
+        setUnreadCount(fresh)
+      })
+      .catch(() => {})
   }
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!body.trim() || !active || sending) return
     setSending(true)
+    inputRef.current?.blur() // dismiss keyboard on mobile
     try {
       const res = await chatApi.sendMessage(active._id, body.trim())
       setMessages((prev) => [...prev, res.data.data.message])
       setBody('')
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     } finally { setSending(false) }
   }
 
@@ -100,66 +106,75 @@ export default function ChatPage() {
   const otherParticipant = (t: Thread) =>
     t.participants.find((p) => p._id !== user?._id)
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+
   return (
     <div className="page">
-      <div className="container" style={{ maxWidth: 960 }}>
-        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, marginBottom: 24 }}>
-          Messages {totalUnread > 0 && <span style={styles.unreadBadge}>{totalUnread}</span>}
-        </h1>
+      <div className="container" style={{ maxWidth: 960, padding: isMobile ? 0 : undefined }}>
+        {/* Hide title on mobile when in a thread */}
+        {(!isMobile || !active) && (
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: isMobile ? 22 : 28, marginBottom: isMobile ? 12 : 24, padding: isMobile ? '16px 16px 0' : undefined }}>
+            Messages {totalUnread > 0 && <span style={styles.unreadBadge}>{totalUnread}</span>}
+          </h1>
+        )}
 
-        <div style={styles.layout}>
-          {/* Thread list */}
-          <div style={styles.threadList}>
-            {threads.length === 0 && (
-              <div style={{ padding: 24, color: '#9BA3C7', fontSize: 14, textAlign: 'center' }}>
-                No conversations yet.<br />Browse listings and contact a lister to start chatting.
-              </div>
-            )}
-            {threads.map((t) => {
-              const other   = otherParticipant(t)
-              const isActive = active?._id === t._id
-              return (
-                <button
-                  key={t._id}
-                  style={{ ...styles.threadItem, ...(isActive ? styles.threadItemActive : {}) }}
-                  onClick={() => openThread(t)}
-                >
-                  <div style={styles.threadAvatar}>{other?.name.charAt(0).toUpperCase()}</div>
-                  <div style={styles.threadInfo}>
-                    <div style={styles.threadName}>{other?.name}</div>
-                    <div style={styles.threadSnippet}>
-                      {t.listingSnapshot?.title}
+        <div style={{ ...styles.layout, gridTemplateColumns: isMobile ? '1fr' : '280px 1fr', height: isMobile ? 'calc(var(--app-height, 100dvh) - 130px)' : 640 }}>
+          {/* Thread list — hidden on mobile when thread is open */}
+          {(!isMobile || !active) && (
+            <div style={{ ...styles.threadList, borderRight: isMobile ? 'none' : '1px solid rgba(255,255,255,0.08)' }}>
+              {threads.length === 0 && (
+                <div style={{ padding: 24, color: '#9BA3C7', fontSize: 14, textAlign: 'center' }}>
+                  No conversations yet.<br />Browse listings and contact a lister to start chatting.
+                </div>
+              )}
+              {threads.map((t) => {
+                const other   = otherParticipant(t)
+                const isActive = active?._id === t._id
+                return (
+                  <button
+                    key={t._id}
+                    style={{ ...styles.threadItem, ...(isActive ? styles.threadItemActive : {}) }}
+                    onClick={() => openThread(t)}
+                  >
+                    <div style={styles.threadAvatar}>{other?.name.charAt(0).toUpperCase()}</div>
+                    <div style={styles.threadInfo}>
+                      <div style={styles.threadName}>{other?.name}</div>
+                      <div style={styles.threadSnippet}>{t.listingSnapshot?.title}</div>
+                      <div style={styles.threadLast} title={t.lastMessage}>
+                        {t.lastMessage || 'Start chatting'}
+                      </div>
                     </div>
-                    <div style={styles.threadLast} title={t.lastMessage}>
-                      {t.lastMessage || 'Start chatting'}
-                    </div>
-                  </div>
-                  {(t.unreadCount || 0) > 0 && (
-                    <div style={styles.threadUnread}>{t.unreadCount}</div>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+                    {(t.unreadCount || 0) > 0 && (
+                      <div style={styles.threadUnread}>{t.unreadCount}</div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
-          {/* Message pane */}
+          {/* Message pane — full screen on mobile */}
           {active ? (
             <div style={styles.msgPane}>
               {/* Header */}
               <div style={styles.msgHeader}>
+                {/* Back button on mobile */}
+                {isMobile && (
+                  <button style={styles.backBtn} onClick={() => { setActive(null); setActiveThreadId(null) }}>←</button>
+                )}
                 <img
                   src={active.listingSnapshot?.mainImage || ''}
                   alt=""
                   style={styles.listingThumb}
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={styles.msgHeaderTitle}>{active.listingSnapshot?.title}</div>
                   <div style={{ fontSize: 13, color: '#4ECDC4' }}>
                     ${active.listingSnapshot?.price?.toLocaleString()}/mo
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                   <button
                     style={{ ...styles.iconAction, color: active.isBlocked ? '#FF6B6B' : '#9BA3C7' }}
                     onClick={blockThread}
@@ -171,16 +186,12 @@ export default function ChatPage() {
 
               {/* Listing status banner */}
               {active.listingSnapshot?.status === 'offMarket' && (
-                <div style={styles.offMarketBanner}>
-                  🔴 This listing is no longer available
-                </div>
+                <div style={styles.offMarketBanner}>🔴 This listing is no longer available</div>
               )}
 
               {/* Blocked banner */}
               {active.isBlocked && (
-                <div style={styles.blockedBanner}>
-                  🚫 This conversation is blocked — no new messages can be sent.
-                </div>
+                <div style={styles.blockedBanner}>🚫 This conversation is blocked — no new messages can be sent.</div>
               )}
 
               {/* Messages */}
@@ -209,12 +220,12 @@ export default function ChatPage() {
               {!active.isBlocked && (
                 <form onSubmit={send} style={styles.inputRow}>
                   <input
+                    ref={inputRef}
                     style={styles.msgInput}
                     placeholder="Type a message..."
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
                     disabled={sending}
-                    autoFocus
                   />
                   <button type="submit" className="btn btn-primary" disabled={sending || !body.trim()}>
                     Send
@@ -223,10 +234,12 @@ export default function ChatPage() {
               )}
             </div>
           ) : (
-            <div style={styles.noThread}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>💬</div>
-              <p style={{ color: '#9BA3C7' }}>Select a conversation to view messages</p>
-            </div>
+            !isMobile && (
+              <div style={styles.noThread}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>💬</div>
+                <p style={{ color: '#9BA3C7' }}>Select a conversation to view messages</p>
+              </div>
+            )
           )}
         </div>
       </div>
@@ -262,7 +275,8 @@ const styles: Record<string, React.CSSProperties> = {
   bubbleText:      { fontSize: 14, lineHeight: 1.5, color: '#F0F2FF', wordBreak: 'break-word' },
   msgTime:         { fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 4, textAlign: 'right' },
   inputRow:        { display: 'flex', gap: 8, padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' },
-  msgInput:        { flex: 1, background: '#2A3055', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#F0F2FF', fontSize: 14, padding: '10px 14px', outline: 'none', fontFamily: "'DM Sans', sans-serif" },
+  msgInput:        { flex: 1, background: '#2A3055', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#F0F2FF', fontSize: 16, padding: '10px 14px', outline: 'none', fontFamily: "'DM Sans', sans-serif" },
   noThread:        { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#5C6490' },
+  backBtn:         { background: 'none', border: 'none', color: '#4ECDC4', fontSize: 22, cursor: 'pointer', padding: '0 8px 0 0', lineHeight: 1, flexShrink: 0 },
   unreadBadge:     { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#4ECDC4', color: '#1B1F3B', borderRadius: 20, fontSize: 14, fontWeight: 700, padding: '2px 10px', marginLeft: 10 },
 }

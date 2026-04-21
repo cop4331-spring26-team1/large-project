@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { listingsApi } from '../api'
-import { useAuth } from '../context/AuthContext'
+import { useAuth }   from '../context/AuthContext'
+import { useSocket } from '../context/SocketContext'
 import ListingCard from '../components/listings/ListingCard'
 import SearchBar   from '../components/listings/SearchBar'
 import MapView     from '../components/map/MapView'
@@ -9,11 +10,19 @@ import type { Listing, ListingFilters } from '../types'
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth()
+  const { socket } = useSocket()
   const [listings, setListings]   = useState<Listing[]>([])
   const [loading, setLoading]     = useState(true)
   const [view, setView]           = useState<'grid' | 'map'>('grid')
   const [filters, setFilters]     = useState<ListingFilters>({ page: 1 })
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1, page: 1 })
+  const [isMobile, setIsMobile]   = useState(window.innerWidth < 768)
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   const fetchListings = useCallback(async () => {
     setLoading(true)
@@ -31,6 +40,16 @@ export default function HomePage() {
 
   useEffect(() => { fetchListings() }, [fetchListings])
 
+  // Live status updates — no refresh needed
+  useEffect(() => {
+    if (!socket) return
+    const onStatusUpdate = ({ listingId, status }: { listingId: string; status: string }) => {
+      setListings((prev) => prev.map((l) => l._id === listingId ? { ...l, status: status as Listing['status'] } : l))
+    }
+    socket.on('listingStatusUpdated', onStatusUpdate)
+    return () => { socket.off('listingStatusUpdated', onStatusUpdate) }
+  }, [socket])
+
   const handleFavoriteChange = (id: string, isFavorited: boolean, count: number) => {
     setListings((prev) =>
       prev.map((l) => l._id === id ? { ...l, isFavorited, favoriteCount: count } : l)
@@ -38,6 +57,8 @@ export default function HomePage() {
   }
 
   const handleFilterChange = (f: ListingFilters) => {
+    // If university was cleared, drop back to grid — map needs a location
+    if (!f.university && view === 'map') setView('grid')
     setFilters({ ...f, page: 1 })
   }
 
@@ -46,10 +67,63 @@ export default function HomePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  if (isMobile) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Sticky header — search bar */}
+        <div style={styles.mobileHeader}>
+          <SearchBar filters={filters} onChange={handleFilterChange} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px 8px' }}>
+            <p style={styles.resultCount}>
+              {loading ? 'Searching...' : `${pagination.total} listing${pagination.total === 1 ? '' : 's'} found`}
+            </p>
+            <div style={styles.viewToggle}>
+              <button style={{ ...styles.toggleBtn, ...(view === 'grid' ? styles.toggleActive : {}) }} onClick={() => setView('grid')}>☰ List</button>
+              <button
+                style={{ ...styles.toggleBtn, ...(view === 'map' ? styles.toggleActive : {}), ...(!filters.university ? { opacity: 0.35, cursor: 'not-allowed' } : {}) }}
+                onClick={() => filters.university && setView('map')}
+                title={!filters.university ? 'Select a university first' : undefined}
+              >🗺 Map</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 100px' }}>
+          {view === 'map' ? (
+            <MapView filters={filters} />
+          ) : loading ? (
+            <div className="loading-center"><div className="spinner" /></div>
+          ) : listings.length === 0 ? (
+            <div className="empty-state">
+              <h3>No listings found</h3>
+              <p>Try adjusting your filters or search for a different university.</p>
+            </div>
+          ) : (
+            <>
+              <div className="listings-grid">
+                {listings.map((listing) => (
+                  <ListingCard key={listing._id} listing={listing} onFavoriteChange={handleFavoriteChange} />
+                ))}
+              </div>
+              {pagination.totalPages > 1 && (
+                <div style={styles.pagination}>
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
+                    <button key={p} style={{ ...styles.pageBtn, ...(p === pagination.page ? styles.pageBtnActive : {}) }} onClick={() => handlePage(p)}>{p}</button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="page">
       <div className="container">
-        {/* Hero */}
+        {/* Hero — desktop only */}
         <div style={styles.hero}>
           <h1 style={styles.heroTitle}>
             Find your perfect<br />
@@ -72,21 +146,11 @@ export default function HomePage() {
         {/* View toggle + count */}
         <div style={styles.toolbar}>
           <p style={styles.resultCount}>
-            {loading ? 'Searching...' : `${pagination.total} listings found`}
+            {loading ? 'Searching...' : `${pagination.total} listing${pagination.total === 1 ? '' : 's'} found`}
           </p>
           <div style={styles.viewToggle}>
-            <button
-              style={{ ...styles.toggleBtn, ...(view === 'grid' ? styles.toggleActive : {}) }}
-              onClick={() => setView('grid')}
-            >
-              ☰ List
-            </button>
-            <button
-              style={{ ...styles.toggleBtn, ...(view === 'map' ? styles.toggleActive : {}) }}
-              onClick={() => setView('map')}
-            >
-              🗺 Map
-            </button>
+            <button style={{ ...styles.toggleBtn, ...(view === 'grid' ? styles.toggleActive : {}) }} onClick={() => setView('grid')}>☰ List</button>
+            <button style={{ ...styles.toggleBtn, ...(view === 'map' ? styles.toggleActive : {}) }} onClick={() => setView('map')}>🗺 Map</button>
           </div>
         </div>
 
@@ -104,28 +168,13 @@ export default function HomePage() {
           <>
             <div className="listings-grid">
               {listings.map((listing) => (
-                <ListingCard
-                  key={listing._id}
-                  listing={listing}
-                  onFavoriteChange={handleFavoriteChange}
-                />
+                <ListingCard key={listing._id} listing={listing} onFavoriteChange={handleFavoriteChange} />
               ))}
             </div>
-
-            {/* Pagination */}
             {pagination.totalPages > 1 && (
               <div style={styles.pagination}>
                 {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    style={{
-                      ...styles.pageBtn,
-                      ...(p === pagination.page ? styles.pageBtnActive : {}),
-                    }}
-                    onClick={() => handlePage(p)}
-                  >
-                    {p}
-                  </button>
+                  <button key={p} style={{ ...styles.pageBtn, ...(p === pagination.page ? styles.pageBtnActive : {}) }} onClick={() => handlePage(p)}>{p}</button>
                 ))}
               </div>
             )}
@@ -153,6 +202,11 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 14,
     maxWidth:  520,
     margin:    '14px auto 0',
+  },
+  mobileHeader: {
+    background:   '#1E2340',
+    borderBottom: '1px solid rgba(255,255,255,0.08)',
+    paddingTop:   8,
   },
   toolbar: {
     display:        'flex',

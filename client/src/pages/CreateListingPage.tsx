@@ -26,6 +26,8 @@ function ListingForm({ editId }: { editId?: string }) {
     petsAllowed: 'false', utilitiesIncluded: 'false',
     address: '', city: '', state: '', university: '',
   })
+  const [status, setStatus]         = useState('active')
+  const [origStatus, setOrigStatus] = useState('active')
   const [images, setImages]         = useState<File[]>([])
   const [previews, setPreviews]     = useState<string[]>([])
   const [existingImgs, setExisting] = useState<string[]>([])
@@ -57,6 +59,8 @@ function ListingForm({ editId }: { editId?: string }) {
       setUniQuery(l.university)
       setExisting(l.images)
       setAddressConfirmed(true)
+      setStatus(l.status)
+      setOrigStatus(l.status)
     }).catch(() => navigate('/my-listings'))
   }, [editId])
 
@@ -149,6 +153,9 @@ function ListingForm({ editId }: { editId?: string }) {
       }
       if (editId) {
         await listingsApi.update(editId, fd)
+        if (status !== origStatus) {
+          await listingsApi.updateStatus(editId, status as any)
+        }
       } else {
         await listingsApi.create(fd)
       }
@@ -303,6 +310,38 @@ function ListingForm({ editId }: { editId?: string }) {
             <label className="form-label">Description</label>
             <textarea className="form-textarea" placeholder="Describe the space, amenities, neighborhood, lease terms..." value={form.description} onChange={(e) => f('description', e.target.value)} style={{ minHeight: 120 }} />
           </div>
+
+          {/* Status — edit only */}
+          {editId && (
+            <div className="form-group">
+              <label className="form-label">Listing Status</label>
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                {[
+                  { value: 'active',    label: 'Available', color: '#34C759' },
+                  { value: 'pending',   label: 'In Talks',  color: '#FFCC00' },
+                  { value: 'offMarket', label: 'Off Market', color: '#FF3B30' },
+                ].map((s) => (
+                  <button
+                    key={s.value}
+                    type="button"
+                    onClick={() => setStatus(s.value)}
+                    style={{
+                      flex: 1, padding: '10px 8px', borderRadius: 10, border: `1.5px solid`,
+                      borderColor: status === s.value ? s.color : 'rgba(255,255,255,0.1)',
+                      background: status === s.value ? `${s.color}22` : 'rgba(255,255,255,0.03)',
+                      color: status === s.value ? s.color : '#9BA3C7',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      fontWeight: 600, fontSize: 13, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, display: 'inline-block' }} />
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Images */}
           <div className="form-group">
