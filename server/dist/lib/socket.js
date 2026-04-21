@@ -6,7 +6,7 @@ exports.userSockets = new Map();
 const initSocket = (server) => {
     exports.io = new socket_io_1.Server(server, {
         cors: {
-            origin: 'http://localhost:5000',
+            origin: process.env.CLIENT_URL || 'http://localhost:5173',
             credentials: true,
         },
     });
