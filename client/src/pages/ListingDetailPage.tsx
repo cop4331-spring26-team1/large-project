@@ -78,8 +78,7 @@ export default function ListingDetailPage() {
   if (!listing) return null
 
   const statusInfo = STATUS_MAP[listing.status]
-  const isOwn = listing.isOwnListing
-
+  const isOwn = listing.isOwnListing || String(listing.owner?._id) === String(user?._id)
   return (
       <div className="page">
         <div className="container" style={{ maxWidth: 960 }}>
