@@ -6,7 +6,7 @@ const getResend = () => new resend_1.Resend(process.env.RESEND_API_KEY);
 const sendVerificationEmail = async (email, name, token) => {
     const verifyUrl = `${process.env.CLIENT_URL}/verify-email/${token}`;
     await getResend().emails.send({
-        from: 'onboarding@resend.dev',
+        from: 'noreply@letsmovenow.rentals',
         to: email,
         subject: 'Verify your email — LetsMovNow',
         html: `
@@ -24,7 +24,7 @@ exports.sendVerificationEmail = sendVerificationEmail;
 const sendPasswordResetEmail = async (email, name, token) => {
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${token}`;
     await getResend().emails.send({
-        from: 'onboarding@resend.dev',
+        from: 'noreply@letsmovenow.rentals',
         to: email,
         subject: 'Reset your password — LetsMovNow',
         html: `

@@ -6,7 +6,7 @@ export const sendVerificationEmail = async (email: string, name: string, token: 
     const verifyUrl = `${process.env.CLIENT_URL}/verify-email/${token}`;
 
     await getResend().emails.send({
-        from:    'onboarding@resend.dev',
+        from:    'noreply@letsmovenow.rentals',
         to:      email,
         subject: 'Verify your email — LetsMovNow',
         html: `
@@ -23,9 +23,9 @@ export const sendVerificationEmail = async (email: string, name: string, token: 
 
 export const sendPasswordResetEmail = async (email: string, name: string, token: string): Promise<void> => {
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${token}`;
-    
+
     await getResend().emails.send({
-        from:    'onboarding@resend.dev',
+        from:    'noreply@letsmovenow.rentals',
         to:      email,
         subject: 'Reset your password — LetsMovNow',
         html: `
