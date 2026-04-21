@@ -150,6 +150,10 @@ const getById = async (req, res) => {
 exports.getById = getById;
 const createListing = async (req, res) => {
     try {
+        if (!req.isVerifiedStudent) {
+            res.status(403).json({ error: 'Only verified students can create listings.' });
+            return;
+        }
         const { title, description, price, bedrooms, petsAllowed, utilitiesIncluded, address, city, state, university, confirmedLat, confirmedLon, } = req.body;
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 60);
@@ -200,6 +204,10 @@ const createListing = async (req, res) => {
 exports.createListing = createListing;
 const updateListing = async (req, res) => {
     try {
+        if (!req.isVerifiedStudent) {
+            res.status(403).json({ error: 'Only verified students can edit listings.' });
+            return;
+        }
         const listing = await Listing_1.default.findById(req.params.id);
         if (!listing) {
             res.status(404).json({ error: 'Listing not found' });

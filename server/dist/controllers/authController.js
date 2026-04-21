@@ -9,11 +9,11 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = __importDefault(require("../models/User"));
 const mailer_1 = require("../lib/mailer");
-const signToken = (userId, email, role, isEmailVerified) => {
+const signToken = (userId, email, role, isEmailVerified, isVerifiedStudent) => {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret)
         throw new Error('JWT_SECRET not set');
-    return jsonwebtoken_1.default.sign({ userId, email, role, isEmailVerified }, jwtSecret, { expiresIn: '7d' });
+    return jsonwebtoken_1.default.sign({ userId, email, role, isEmailVerified, isVerifiedStudent }, jwtSecret, { expiresIn: '7d' });
 };
 const serializeUser = (user) => ({
     _id: user._id,
@@ -82,7 +82,7 @@ const loginUser = async (req, res) => {
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }
-        const token = signToken(user._id.toString(), user.email, user.role, user.isEmailVerified);
+        const token = signToken(user._id.toString(), user.email, user.role, user.isEmailVerified, user.isVerifiedStudent);
         res.status(200).json({
             message: 'Login successful',
             data: {
@@ -151,7 +151,7 @@ const verifyEmail = async (req, res) => {
         user.emailVerifyToken = undefined;
         user.emailVerifyExpires = undefined;
         await user.save();
-        const authToken = signToken(user._id.toString(), user.email, user.role, user.isEmailVerified);
+        const authToken = signToken(user._id.toString(), user.email, user.role, user.isEmailVerified, user.isVerifiedStudent);
         res.status(200).json({
             message: 'Email verified successfully',
             data: {

@@ -17,6 +17,7 @@ const protect = (req, res, next) => {
         req.userId = payload.userId;
         req.userRole = payload.role;
         req.isEmailVerified = payload.isEmailVerified;
+        req.isVerifiedStudent = payload.isVerifiedStudent;
         next();
     }
     catch {
