@@ -132,6 +132,10 @@ const getMessages = async (req, res) => {
 exports.getMessages = getMessages;
 const sendMessage = async (req, res) => {
     try {
+        if (!req.isEmailVerified) {
+            res.status(403).json({ error: 'Please verify your email before messaging.' });
+            return;
+        }
         const thread = await Thread_1.default.findById(req.params.id);
         if (!thread) {
             res.status(404).json({ error: 'Thread not found' });

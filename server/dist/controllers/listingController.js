@@ -256,6 +256,10 @@ const updateListing = async (req, res) => {
 exports.updateListing = updateListing;
 const updateStatus = async (req, res) => {
     try {
+        if (!req.isVerifiedStudent && req.userRole !== 'admin') {
+            res.status(403).json({ error: 'Only verified students can update listing status.' });
+            return;
+        }
         const listing = await Listing_1.default.findById(req.params.id);
         if (!listing) {
             res.status(404).json({ error: 'Listing not found' });
@@ -307,6 +311,10 @@ const toggleFavorite = async (req, res) => {
 exports.toggleFavorite = toggleFavorite;
 const deleteListing = async (req, res) => {
     try {
+        if (!req.isVerifiedStudent && req.userRole !== 'admin') {
+            res.status(403).json({ error: 'Only verified students can delete listings.' });
+            return;
+        }
         const listing = await Listing_1.default.findById(req.params.id);
         if (!listing) {
             res.status(404).json({ error: 'Listing not found' });
@@ -327,6 +335,10 @@ const deleteListing = async (req, res) => {
 exports.deleteListing = deleteListing;
 const deleteListingImage = async (req, res) => {
     try {
+        if (!req.isVerifiedStudent && req.userRole !== 'admin') {
+            res.status(403).json({ error: 'Only verified students can remove listing images.' });
+            return;
+        }
         const listing = await Listing_1.default.findById(req.params.id);
         if (!listing) {
             res.status(404).json({ error: 'Listing not found' });
