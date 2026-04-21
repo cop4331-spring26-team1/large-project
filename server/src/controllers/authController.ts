@@ -157,6 +157,7 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
     }
 
     user.isEmailVerified    = true;
+    user.isVerifiedStudent  = user.email.endsWith('.edu');
     user.emailVerifyToken   = undefined;
     user.emailVerifyExpires = undefined;
     await user.save();
