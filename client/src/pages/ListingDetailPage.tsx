@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { listingsApi, chatApi } from '../api'
 import { useAuth } from '../context/AuthContext'
 import type { Listing } from '../types'
-
+// Listing page
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   active:    { label: 'Active',      color: '#4ECDC4' },
   pending:   { label: 'In Talks',    color: '#FFE66D' },
