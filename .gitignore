@@ -1,4 +1,5 @@
 .idea
+.DS_Store
 
 # --- Node.js (Server & Client) ---
 node_modules/
