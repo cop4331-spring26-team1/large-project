@@ -18,7 +18,10 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
 const PORT = process.env.PORT || 5000;
-app.use((0, cors_1.default)({ origin: 'http://localhost:5173', credentials: true }));
+app.use((0, cors_1.default)({
+    origin: (process.env.CORS_ORIGINS ?? 'http://localhost:5173').split(','),
+    credentials: true,
+}));
 app.use(express_1.default.json());
 app.get('/', (_req, res) => {
     res.send('Server is running');
