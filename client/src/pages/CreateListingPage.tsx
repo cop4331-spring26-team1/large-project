@@ -161,7 +161,7 @@ function ListingForm({ editId }: { editId?: string }) {
       }
       navigate('/my-listings')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save listing')
+      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to save listing')
     } finally { setLoading(false) }
   }
 
