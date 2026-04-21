@@ -20,7 +20,9 @@ export default function RegisterPage() {
       await authApi.register(form)
       setSuccess('Account created! Check your email to verify your account before logging in.')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed')
+      const data = err.response?.data
+      const msg = data?.errors?.length ? data.errors.join(' · ') : data?.message || 'Registration failed'
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -75,7 +77,17 @@ export default function RegisterPage() {
 
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input className="form-input" name="password" type="password" placeholder="Min. 8 characters, at least 1 number" value={form.password} onChange={handle} required minLength={8} />
+            <input className="form-input" name="password" type="password" placeholder="Create a password" value={form.password} onChange={handle} required minLength={8} />
+            {form.password.length > 0 && (
+              <div style={styles.pwRules}>
+                <span style={{ ...styles.pwRule, color: form.password.length >= 8 ? '#4ECDC4' : '#FF6B6B' }}>
+                  {form.password.length >= 8 ? '✓' : '✗'} At least 8 characters
+                </span>
+                <span style={{ ...styles.pwRule, color: /\d/.test(form.password) ? '#4ECDC4' : '#FF6B6B' }}>
+                  {/\d/.test(form.password) ? '✓' : '✗'} Contains a number
+                </span>
+              </div>
+            )}
           </div>
 
           <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading} style={{ marginTop: 4 }}>
@@ -103,5 +115,7 @@ const styles: Record<string, React.CSSProperties> = {
   eduNoteActive: { background: 'rgba(78,205,196,0.08)', borderColor: 'rgba(78,205,196,0.3)', color: '#cde8e6' },
   form:   { display: 'flex', flexDirection: 'column', gap: 18 },
   error:  { background: 'rgba(255,107,107,0.1)', border: '1px solid rgba(255,107,107,0.3)', borderRadius: 10, padding: '10px 14px', fontSize: 14, color: '#FF6B6B' },
-  footer: { textAlign: 'center', marginTop: 24, fontSize: 14, color: '#9BA3C7' },
+  footer:  { textAlign: 'center', marginTop: 24, fontSize: 14, color: '#9BA3C7' },
+  pwRules: { display: 'flex', flexDirection: 'column' as const, gap: 4, marginTop: 6 },
+  pwRule:  { fontSize: 12, transition: 'color 0.15s', fontFamily: "'DM Sans', sans-serif" },
 }

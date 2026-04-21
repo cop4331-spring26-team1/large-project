@@ -78,9 +78,11 @@ export default function HomePage() {
               {loading ? 'Searching...' : `${pagination.total} listing${pagination.total === 1 ? '' : 's'} found`}
             </p>
             <div style={styles.viewToggle}>
-              <button style={{ ...styles.toggleBtn, ...(view === 'grid' ? styles.toggleActive : {}) }} onClick={() => setView('grid')}>☰ List</button>
+              <button style={{ ...styles.toggleBtn, ...(view === 'grid' ? styles.toggleActive : {}) }} aria-label="List view" onClick={() => setView('grid')}>☰ List</button>
               <button
                 style={{ ...styles.toggleBtn, ...(view === 'map' ? styles.toggleActive : {}), ...(!filters.university ? { opacity: 0.35, cursor: 'not-allowed' } : {}) }}
+                aria-label="Map view"
+                aria-disabled={!filters.university}
                 onClick={() => filters.university && setView('map')}
                 title={!filters.university ? 'Select a university first' : undefined}
               >🗺 Map</button>
@@ -149,8 +151,8 @@ export default function HomePage() {
             {loading ? 'Searching...' : `${pagination.total} listing${pagination.total === 1 ? '' : 's'} found`}
           </p>
           <div style={styles.viewToggle}>
-            <button style={{ ...styles.toggleBtn, ...(view === 'grid' ? styles.toggleActive : {}) }} onClick={() => setView('grid')}>☰ List</button>
-            <button style={{ ...styles.toggleBtn, ...(view === 'map' ? styles.toggleActive : {}) }} onClick={() => setView('map')}>🗺 Map</button>
+            <button style={{ ...styles.toggleBtn, ...(view === 'grid' ? styles.toggleActive : {}) }} aria-label="List view" onClick={() => setView('grid')}>☰ List</button>
+            <button style={{ ...styles.toggleBtn, ...(view === 'map' ? styles.toggleActive : {}) }} aria-label="Map view" onClick={() => setView('map')}>🗺 Map</button>
           </div>
         </div>
 

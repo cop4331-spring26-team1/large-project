@@ -94,6 +94,9 @@ export const chatApi = {
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 export const adminApi = {
+  getStats: () =>
+    api.get('/admin/stats'),
+
   getUsers: (params = {}) =>
     api.get('/admin/users', { params }),
 
@@ -108,6 +111,15 @@ export const adminApi = {
 
   reactivateListing: (id: string) =>
     api.patch(`/admin/listings/${id}/reactivate`),
+
+  forceStatus: (id: string, status: string) =>
+    api.patch(`/admin/listings/${id}/status`, { status }),
+
+  boostListing: (id: string, days: number) =>
+    api.patch(`/admin/listings/${id}/boost`, { days }),
+
+  unboostListing: (id: string) =>
+    api.patch(`/admin/listings/${id}/unboost`),
 
   deleteListing: (id: string) =>
     api.delete(`/admin/listings/${id}`),

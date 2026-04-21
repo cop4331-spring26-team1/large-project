@@ -161,7 +161,7 @@ function ListingForm({ editId }: { editId?: string }) {
       }
       navigate('/my-listings')
     } catch (err: any) {
-      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to save listing')
+      setError(err.response?.data?.message || 'Failed to save listing')
     } finally { setLoading(false) }
   }
 
@@ -351,7 +351,7 @@ function ListingForm({ editId }: { editId?: string }) {
                 {existingImgs.map((url) => (
                   <div key={url} style={styles.thumbWrap}>
                     <img src={url} style={styles.thumbImg} alt="" />
-                    <button type="button" style={styles.removeThumb} onClick={() => removeExisting(url)}>✕</button>
+                    <button type="button" style={styles.removeThumb} aria-label="Remove image" onClick={() => removeExisting(url)}>✕</button>
                   </div>
                 ))}
               </div>

@@ -70,14 +70,14 @@ export default function Navbar() {
           <div style={d.right}>
             {isAuthenticated ? (
               <>
-                <Link to="/favorites" style={d.iconBtn}>
+                <Link to="/favorites" style={d.iconBtn} aria-label={`Saved homes${favoriteCount > 0 ? `, ${favoriteCount}` : ''}`}>
                   <span style={d.iconWrap}>♥{favoriteCount > 0 && <span style={{ ...d.badge, background: '#FF6B6B' }}>{favoriteCount > 99 ? '99+' : favoriteCount}</span>}</span>
                 </Link>
-                <Link to="/chat" style={d.iconBtn}>
+                <Link to="/chat" style={d.iconBtn} aria-label={`Messages${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}>
                   <span style={d.iconWrap}>💬{unreadCount > 0 && <span style={{ ...d.badge, background: '#4ECDC4', color: '#1B1F3B' }}>{unreadCount > 99 ? '99+' : unreadCount}</span>}</span>
                 </Link>
                 <div style={{ position: 'relative' }}>
-                  <button style={d.userBtn} onClick={() => setMenuOpen(!menuOpen)}>
+                  <button style={d.userBtn} aria-label="Account menu" onClick={() => setMenuOpen(!menuOpen)}>
                     <span style={d.avatar}>{user!.name.charAt(0).toUpperCase()}</span>
                     <span style={d.userName}>{user!.name.split(' ')[0]}</span>
                     {user!.isVerifiedStudent && <span style={d.verifiedDot}>✓</span>}
@@ -95,7 +95,7 @@ export default function Navbar() {
                       <Link to="/favorites" style={d.dropdownItem} onClick={() => setMenuOpen(false)}>Saved Homes</Link>
                       {isAdmin && <Link to="/admin" style={{ ...d.dropdownItem, color: '#FFE66D' }} onClick={() => setMenuOpen(false)}>Admin Panel</Link>}
                       <div style={d.dropdownDivider} />
-                      <button style={{ ...d.dropdownItem, color: '#FF6B6B', width: '100%', textAlign: 'left' }} onClick={handleLogout}>Sign Out</button>
+                      <button style={{ ...d.dropdownItem, color: '#FF6B6B', width: '100%', textAlign: 'left' }} aria-label="Sign out" onClick={handleLogout}>Sign Out</button>
                     </div>
                   )}
                 </div>
@@ -137,7 +137,7 @@ export default function Navbar() {
               </span>
               <span className="tab-label">Messages</span>
             </Link>
-            <button className={`tab${sheetOpen ? ' tab-active' : ''}`} onClick={() => setSheetOpen(true)}>
+            <button className={`tab${sheetOpen ? ' tab-active' : ''}`} aria-label="Open profile menu" onClick={() => setSheetOpen(true)}>
               <span className="tab-avatar">{user!.name.charAt(0).toUpperCase()}</span>
               <span className="tab-label">Profile</span>
             </button>
@@ -170,7 +170,7 @@ export default function Navbar() {
             <Link to="/favorites" className="sheet-item" onClick={() => setSheetOpen(false)}><span className="sheet-item-icon">♥</span> Saved Homes</Link>
             {isAdmin && <Link to="/admin" className="sheet-item" style={{ color: '#FFE66D' }} onClick={() => setSheetOpen(false)}><span className="sheet-item-icon">⚙️</span> Admin Panel</Link>}
             <div className="sheet-divider" />
-            <button className="sheet-item" style={{ color: '#FF6B6B', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }} onClick={handleLogout}><span className="sheet-item-icon">↩</span> Sign Out</button>
+            <button className="sheet-item" aria-label="Sign out" style={{ color: '#FF6B6B', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }} onClick={handleLogout}><span className="sheet-item-icon">↩</span> Sign Out</button>
           </div>
         </>
       )}
@@ -180,7 +180,7 @@ export default function Navbar() {
 
 // Desktop-only inline styles
 const d: Record<string, React.CSSProperties> = {
-  inner:          { maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', gap: 32 },
+  inner:          { maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', gap: 32, justifyContent: 'space-between' },
   logo:           { display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 },
   logoText:       { fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 20, color: '#F0F2FF' },
   links:          { display: 'flex', alignItems: 'center', gap: 4, flex: 1 },

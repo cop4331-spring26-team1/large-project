@@ -75,7 +75,7 @@ export default function MyListingsPage() {
           <h1 style={s.title}>My Listings</h1>
           <p style={{ color: '#9BA3C7', fontSize: 13, marginTop: 2 }}>{listings.length} listing{listings.length !== 1 ? 's' : ''}</p>
         </div>
-        <button style={s.addBtn} onClick={() => navigate('/listings/create')}>+</button>
+        <button style={s.addBtn} aria-label="Create new listing" onClick={() => navigate('/listings/create')}>+</button>
       </div>
 
       {listings.length === 0 ? (
@@ -105,6 +105,7 @@ export default function MyListingsPage() {
                     {/* Status pill — tappable */}
                     <button
                       style={{ ...s.statusPill, color, background: `${color}1F`, border: `1px solid ${color}66` }}
+                      aria-label={`Change status: ${STATUS_LABEL[l.status]}`}
                       onClick={(e) => { e.stopPropagation(); setStatusSheet(l) }}
                     >
                       <span style={{ ...s.statusDot, background: color }} />
@@ -128,6 +129,7 @@ export default function MyListingsPage() {
                   <div style={s.actionDivider} />
                   <button
                     style={{ ...s.actionBtn, color: '#FF3B30' }}
+                    aria-label={`Delete listing: ${l.title}`}
                     onClick={() => setDeleteTarget(l._id)}
                   >
                     🗑 Delete

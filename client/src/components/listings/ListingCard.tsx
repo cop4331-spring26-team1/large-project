@@ -56,7 +56,7 @@ export default function ListingCard({ listing, onFavoriteChange }: Props) {
 
   return (
     <Link to={`/listings/${listing._id}`} style={{ textDecoration: 'none' }}>
-      <div style={styles.card}>
+      <div style={{ ...styles.card, ...(isBoosted ? styles.cardBoosted : {}) }}>
         {/* Image */}
         <div style={styles.imageWrap}>
           <img
@@ -64,11 +64,12 @@ export default function ListingCard({ listing, onFavoriteChange }: Props) {
             alt={listing.title}
             style={styles.image}
             loading="lazy"
+            decoding="async"
           />
 
-          {/* Boosted ribbon */}
+          {/* Sponsored ribbon */}
           {isBoosted && (
-            <div style={styles.boostedRibbon}>⚡ Featured</div>
+            <div style={styles.boostedRibbon}>⚡ Sponsored</div>
           )}
 
           {/* Heart button — top right */}
@@ -151,6 +152,10 @@ const styles: Record<string, React.CSSProperties> = {
     height:        '100%',
     display:       'flex',
     flexDirection: 'column',
+  },
+  cardBoosted: {
+    border:    '1.5px solid rgba(255,200,0,0.5)',
+    boxShadow: '0 0 16px rgba(255,200,0,0.12)',
   },
   imageWrap: {
     position:    'relative',

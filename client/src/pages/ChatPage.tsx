@@ -160,7 +160,7 @@ export default function ChatPage() {
               <div style={styles.msgHeader}>
                 {/* Back button on mobile */}
                 {isMobile && (
-                  <button style={styles.backBtn} onClick={() => { setActive(null); setActiveThreadId(null) }}>←</button>
+                  <button style={styles.backBtn} aria-label="Back to conversations" onClick={() => { setActive(null); setActiveThreadId(null) }}>←</button>
                 )}
                 <img
                   src={active.listingSnapshot?.mainImage || ''}
@@ -178,9 +178,9 @@ export default function ChatPage() {
                   <button
                     style={{ ...styles.iconAction, color: active.isBlocked ? '#FF6B6B' : '#9BA3C7' }}
                     onClick={blockThread}
-                    title={active.isBlocked ? 'Unblock' : 'Block conversation'}
+                    aria-label={active.isBlocked ? 'Unblock conversation' : 'Block conversation'}
                   >🚫</button>
-                  <button style={{ ...styles.iconAction, color: '#FF6B6B' }} onClick={deleteThread} title="Delete thread">🗑</button>
+                  <button style={{ ...styles.iconAction, color: '#FF6B6B' }} onClick={deleteThread} aria-label="Delete conversation">🗑</button>
                 </div>
               </div>
 

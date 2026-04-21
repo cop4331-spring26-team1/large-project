@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /chat
+Disallow: /my-listings
+Disallow: /listings/create
+Disallow: /listings/*/edit
+
+Sitemap: https://letsmovnow.com/sitemap.xml

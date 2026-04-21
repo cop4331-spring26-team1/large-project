@@ -1,6 +1,3 @@
-/* ── Google Fonts ────────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap');
-
 /* ── CSS Variables ───────────────────────────────────────────────────────────── */
 :root {
   /* Brand palette */
@@ -24,8 +21,8 @@
 
   /* Text */
   --text-primary:   #F0F2FF;
-  --text-secondary: #9BA3C7;
-  --text-muted:     #5C6490;
+  --text-secondary: #B0B8D8;
+  --text-muted:     #9BA3C7;
 
   /* Status colors */
   --status-active:    #4ECDC4;
@@ -328,7 +325,7 @@ h1, h2, h3, h4, h5 {
   border: none;
   cursor: pointer;
   text-decoration: none;
-  color: #5C6490;
+  color: #8891B8;
   min-height: 56px;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }

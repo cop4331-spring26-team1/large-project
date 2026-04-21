@@ -81,6 +81,7 @@ export default function SearchBar({ filters, onChange }: Props) {
             {uniQuery && (
               <button
                 style={mobStyles.clearX}
+                aria-label="Clear search"
                 onPointerDown={(e) => { e.preventDefault(); setUniQuery(''); setSuggestions([]); clearAll(); }}
               >
                 <IconClose />
@@ -89,6 +90,7 @@ export default function SearchBar({ filters, onChange }: Props) {
           </div>
           <button
             style={{ ...mobStyles.filterBtn, ...(showFilters || activeFilterCount > 0 ? mobStyles.filterBtnActive : {}) }}
+            aria-label={showFilters ? 'Hide filters' : 'Show filters'}
             onClick={() => setShowFilters(!showFilters)}
           >
             <IconTune />
@@ -133,13 +135,6 @@ export default function SearchBar({ filters, onChange }: Props) {
                   <option value="1">1 bed</option>
                   <option value="2">2 beds</option>
                   <option value="3">3+ beds</option>
-                </select>
-              </div>
-              <div style={mobStyles.filterGroup}>
-                <label style={mobStyles.filterLabel}>Sort</label>
-                <select style={mobStyles.filterSelect} value={filters.sortBy || 'newest'} onChange={(e) => handleChange('sortBy', e.target.value)}>
-                  <option value="price_asc">Price ↑</option>
-                  <option value="distance_asc">Closest</option>
                 </select>
               </div>
               <div style={mobStyles.filterGroup}>
@@ -196,6 +191,7 @@ export default function SearchBar({ filters, onChange }: Props) {
           {uniQuery && (
             <button
               style={{ position: 'absolute', right: 10, background: 'none', border: 'none', cursor: 'pointer', color: '#9BA3C7', display: 'flex', alignItems: 'center', padding: 0 }}
+              aria-label="Clear search"
               onPointerDown={(e) => { e.preventDefault(); setUniQuery(''); setSuggestions([]); clearAll(); }}
             >
               <IconClose />
@@ -217,19 +213,10 @@ export default function SearchBar({ filters, onChange }: Props) {
           )}
         </div>
 
-        {/* Sort */}
-        <select
-          style={{ ...styles.input, flex: 1 }}
-          value={filters.sortBy || 'newest'}
-          onChange={(e) => handleChange('sortBy', e.target.value)}
-        >
-          <option value="price_asc">Price: Low → High</option>
-          <option value="distance_asc">Closest to campus</option>
-        </select>
-
         {/* Filter toggle */}
         <button
           style={{ ...styles.filterToggle, ...(showFilters ? styles.filterToggleActive : {}) }}
+          aria-label={showFilters ? 'Hide filters' : 'Show filters'}
           onClick={() => setShowFilters(!showFilters)}
         >
           ⚙ Filters {hasFilters && <span style={styles.filterDot} />}

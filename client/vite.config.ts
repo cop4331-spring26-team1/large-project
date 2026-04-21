@@ -12,4 +12,15 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor':  ['react', 'react-dom', 'react-router-dom'],
+          'map-vendor':    ['leaflet', 'react-leaflet'],
+          'socket-vendor': ['socket.io-client'],
+        },
+      },
+    },
+  },
 })

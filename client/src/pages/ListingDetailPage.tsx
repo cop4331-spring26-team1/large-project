@@ -4,7 +4,7 @@ import { listingsApi, chatApi } from '../api'
 import { useAuth }   from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
 import type { Listing } from '../types'
-// Listing page
+
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   active:    { label: 'Active',      color: '#4ECDC4' },
   pending:   { label: 'In Talks',    color: '#FFE66D' },
@@ -92,7 +92,8 @@ export default function ListingDetailPage() {
   if (!listing) return null
 
   const statusInfo = STATUS_MAP[listing.status]
-  const isOwn = listing.isOwnListing || String(listing.owner?._id) === String(user?._id)
+  const isOwn = listing.isOwnListing
+
   return (
     <div className="page">
       <div className="container" style={{ maxWidth: 960 }}>
