@@ -150,7 +150,7 @@ const getById = async (req, res) => {
 exports.getById = getById;
 const createListing = async (req, res) => {
     try {
-        if (!req.isVerifiedStudent) {
+        if (!req.isVerifiedStudent && req.userRole !== 'admin') {
             res.status(403).json({ error: 'Only verified students can create listings.' });
             return;
         }
@@ -204,7 +204,7 @@ const createListing = async (req, res) => {
 exports.createListing = createListing;
 const updateListing = async (req, res) => {
     try {
-        if (!req.isVerifiedStudent) {
+        if (!req.isVerifiedStudent && req.userRole !== 'admin') {
             res.status(403).json({ error: 'Only verified students can edit listings.' });
             return;
         }
@@ -213,7 +213,7 @@ const updateListing = async (req, res) => {
             res.status(404).json({ error: 'Listing not found' });
             return;
         }
-        if (listing.owner.toString() !== req.userId) {
+        if (listing.owner.toString() !== req.userId && req.userRole !== 'admin') {
             res.status(403).json({ error: 'Forbidden' });
             return;
         }
