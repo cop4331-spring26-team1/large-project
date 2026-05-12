@@ -1,6 +1,9 @@
-# Rental App
+# About
 
-A full-stack rental/sublease listing  website and application.
+Let's Move Now is a MERN-based web and mobile application allowing users to list and browse apartments for rent or sublet at any university in the country. Users can create an account, browse available listings, create their own listings, and filter listings by location, price, and more. Users can also directly message listers to get more info on a listing, or proceed with renting out the apartment.
+
+# Tech Stack
+
 - **Frontend:** Next.js 14, TypeScript, Tailwind CSS, shadcn/ui.
 - **Backend:** Node.js, Express, Socket.io (Real-time chat).
 - **Mobile:** Flutter (iOS/Android).
